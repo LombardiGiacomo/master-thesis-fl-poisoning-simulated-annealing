@@ -1,0 +1,56 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "test-fl"
+version = "1.0.0"
+description = "Federated Learning with PyTorch and Flower (LSTM on PRSA stations)"
+dependencies = [
+    #"flwr[simulation]>=1.24.0",
+    "flwr>=1.24.0",
+    "torch==2.8.0+cpu",
+    #"torch==2.8.0",
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+    "scikit-learn>=1.3.0",
+]
+
+[tool.hatch.build.targets.wheel]
+#packages = ["."]    # impacchetta tutto il progetto come modulo Python
+packages = ["LSTMfederated"]
+
+[tool.flwr.app]
+publisher = "giacomo"
+
+[tool.flwr.app.components]
+serverapp = "LSTMfederated.server_app:app"     # il ServerApp è la variabile app in pytorchexample/server_app.py
+clientapp = "LSTMfederated.client_app:app"     # il ClientApp è la variabile app in pytorchexample/client_app.py
+
+[tool.flwr.app.config]      # Configurazione Flower: I valori sono passati a server e client che ci accedono come context.run_config["learning-rate"]
+num-server-rounds = 20      # Numero di round federati
+fraction-evaluate = 1       # % di client usati per evaluation
+local-epochs = 1            # epoche locali per ogni client
+learning-rate = 0.001       # LR del training locale
+batch-size = 64             # batch size locale
+malicious-ids = "3"         # IDs dei client malevoli    
+k-noise = 0.0           
+kmax-target-id = 3
+noise-seed-base = 1337  
+
+[tool.flwr.federations] # Dove gira l'app
+#default = "local-simulation"
+default = "local-deployment"    # Cosi flwr run . usa direttamente il deployment
+
+[tool.flwr.federations.local-simulation]    # Voce solo per Simulation (non per Deployment)
+options.num-supernodes = 5                  # 5 client (num-supernodes = numero di client)
+
+# Per l'esecuzione locale (nodi eseguiti da terminali diversi)
+[tool.flwr.federations.local-deployment]
+address = "127.0.0.1:9093"
+insecure = true
+
+# Per l'esecuzione su piu nodi fisici
+#[tool.flwr.federations.local-deployment]
+#address = "n08.maas:9093"
+#insecure = true

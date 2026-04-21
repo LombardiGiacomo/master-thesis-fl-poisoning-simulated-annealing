@@ -1,0 +1,30 @@
+=== SA Selective Backdoor Parameters ===
+sa_T0=1.0
+sa_Tmin=0.001
+sa_alpha=0.9
+sa_L=10
+sa_step_radius=0.1
+lambda_clean=1.0
+patience=5
+========================================
+
+Round 1: best_mse_poison=0.017331, best_mse_clean=0.000773
+Round 2: best_mse_poison=0.025695, best_mse_clean=0.001394
+Round 3: best_mse_poison=0.014560, best_mse_clean=0.000298
+Round 4: best_mse_poison=0.013351, best_mse_clean=0.000293
+Round 5: best_mse_poison=0.014079, best_mse_clean=0.000259
+Round 6: best_mse_poison=0.016118, best_mse_clean=0.000837
+Round 7: best_mse_poison=0.013643, best_mse_clean=0.000233
+Round 8: best_mse_poison=0.013979, best_mse_clean=0.000243
+Round 9: best_mse_poison=0.015388, best_mse_clean=0.000212
+Round 10: best_mse_poison=0.014149, best_mse_clean=0.000223
+Round 11: best_mse_poison=0.016822, best_mse_clean=0.000251
+Round 12: best_mse_poison=0.014342, best_mse_clean=0.000188
+Round 13: best_mse_poison=0.015348, best_mse_clean=0.000344
+Round 14: best_mse_poison=0.017219, best_mse_clean=0.000798
+Round 15: best_mse_poison=0.013844, best_mse_clean=0.000202
+Round 16: best_mse_poison=0.015208, best_mse_clean=0.000233
+Round 17: best_mse_poison=0.018204, best_mse_clean=0.000288
+Round 18: best_mse_poison=0.017027, best_mse_clean=0.000389
+Round 19: best_mse_poison=0.017815, best_mse_clean=0.000424
+Round 20: best_mse_poison=0.015167, best_mse_clean=0.000223
