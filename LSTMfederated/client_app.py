@@ -16,14 +16,6 @@ def _make_seed(seed_base: int, partition_id: int) -> int:
 # Flower ClientApp
 app = ClientApp()
 
-# La lista dei k_max che abbiamo estratto dal server (Round 1 -> 20)
-KMAX_HISTORY = [
-    0.252481, 0.151847, 0.152350, 0.171969, 0.149407,
-    0.144403, 0.157389, 0.110117, 0.140139, 0.126515,
-    0.123087, 0.105830, 0.097288, 0.092477, 0.090793,
-    0.089503, 0.088460, 0.081017, 0.074369, 0.069817
-]
-
 @app.train()
 def train(msg: Message, context: Context):  # Funzione chiamata dal server ad ogni round
     """Train the model on local data."""
@@ -110,13 +102,14 @@ def train(msg: Message, context: Context):  # Funzione chiamata dal server ad og
     # ---------------------------------------------------------
 
     # ---------------------------------------------------------
-    # MODEL POISONING #3.2: Random Noise Attack with noise scaling and seed for random number generator
-    #                       The seed allows to implement a selective noise injection at each round
+    # MODEL POISONING #3.2: Systematic Noise Attack
+    #  (Added noise scaling with parameter k and seed for random number generator
+    #  The seed allows to implement a selective noise injection at each round)
     # ---------------------------------------------------------
     #if is_malicious:
-    #    k = context.run_config.get("k-noise", 0.0)  # Parametro che controlla la "forza" dell'attacco
+    #    k = context.run_config.get("k-noise", 0.0)  # Parameter that controls the strength of the attack
 #
-    #    # Use a seed so that at every round the generate noise is the same
+    #    # Use a seed so that at every round the generated noise is the same
     #    seed = int(context.run_config.get("noise-seed-base", 1337)) + int(partition_id)
     #    g = torch.Generator(device="cpu")
     #    g.manual_seed(int(seed))
@@ -134,143 +127,108 @@ def train(msg: Message, context: Context):  # Funzione chiamata dal server ad og
     #                poisoned[i] = v_local
     #        model.load_state_dict(poisoned)             # Load the poisoned model replacing v_local
 #
-    #        print(f"[!!! ATTACK (Client {partition_id})!!!] Scaled RANDOM NOISE ADDITION to local model")
+    #        print(f"[!!! ATTACK (Client {partition_id})!!!] Scaled SYSTEMATIC NOISE ADDITION to local model")
     # ---------------------------------------------------------
 
     # ---------------------------------------------------------
-    # MODEL POISONING #3: Random Noise Attack --> Rumore gaussiano aggiunto ai pesi locali
+    # MODEL POISONING #3.3: Adaptive Noise Addition Attack
     # ---------------------------------------------------------
     #if is_malicious:
-    #    k = context.run_config.get("k-noise", 0.0)  # Parametro che controlla la "forza" dell'attacco
+    #    k = context.run_config.get("k-noise", 0.0)  # Parameter that controls the strength of the attack
 #
-    #    # Questo pezzo di codice permette di utilizzare una sequenza di valori contenuti in KMAX_HISTORY come valori k da usare ad ogni round
-    #    # Recupera la "Memoria" persistente del client tramite il context
-    #    #if "attack_state" not in context.state.configs_records:
-    #    #    context.state.configs_records["attack_state"] = ConfigRecord({"round_idx": 0})
-    #    #    
-    #    # Leggi l'indice del round corrente
-    #    #round_idx = context.state.configs_records["attack_state"]["round_idx"]
-    #    #
-    #    ## Incrementa il contatore e salvalo subito nel context per il round successivo
-    #    #context.state.configs_records["attack_state"]["round_idx"] = round_idx + 1
-    #    #
-    #    ## Seleziona il k_max corretto
-    #    #if round_idx < len(KMAX_HISTORY):
-    #    #    k = KMAX_HISTORY[round_idx] * 0.99  # Usa il tuo margine del 99% o 80%
-    #    #else:
-    #    #    k = KMAX_HISTORY[-1] * 0.99
-#
-    #    seed_base = int(context.run_config.get("noise-seed-base", 1337))
-    #    seed = _make_seed(seed_base, partition_id)
+    #    # Use a seed so that at every round the generated noise is the same
+    #    seed = int(context.run_config.get("noise-seed-base", 1337)) + int(partition_id)
+    #    g = torch.Generator(device="cpu")
+    #    g.manual_seed(int(seed))
 #
     #    if k > 0.0:
     #        with torch.no_grad():
     #            local_state = model.state_dict()
     #            poisoned = {}
     #    
-    #            # 1️) Calcola norma dell'update reale: ||Δ|| = ||w_local - w_global||
-    #            # Questa rappresenta la grandezza dell'update "vero", che il client avrebbe mandato se fosse onesto
+    #            # 1. Compute the norm of legitimate update: dimension of the "real" update, if the client were honest
     #            delta_norm_sq = 0.0
-    #            for k_param, v_local in local_state.items():
-    #                v_global = global_state[k_param]
+    #            for i, v_local in local_state.items():
+    #                v_global = global_state[i]
     #                if torch.is_floating_point(v_local):
     #                    delta = v_local - v_global
     #                    delta_norm_sq += torch.sum(delta**2)
-    #            delta_norm = torch.sqrt(delta_norm_sq)  # Norma update legittimo
-    #    
-    #            # rumore deterministico (CPU) per riproducibilità
-    #            g = torch.Generator(device="cpu")
-    #            g.manual_seed(int(seed))
+    #            delta_norm = torch.sqrt(delta_norm_sq)  # Norm of legitimate update
 #
-    #            # 2️) Genera rumore gaussiano per ogni tensore (layer) e calcola la sua norma
+    #            # 2. Generate noise for each layer and compute its norm
     #            noise_norm_sq = 0.0
     #            noise_dict = {}
-    #    
-    #            for name, v_local in local_state.items():
+    #            for i, v_local in local_state.items():
     #                if torch.is_floating_point(v_local):
-    #                    # genera su CPU e poi converte, così server+client possono combaciare
-    #                    noise_cpu = torch.randn(tuple(v_local.detach().cpu().shape), generator=g, device="cpu", dtype=torch.float32)
-    #                    noise = noise_cpu.to(v_local.device).type_as(v_local)
-    #                    noise_dict[name] = noise
+    #                    noise = torch.randn(v_local.shape, generator=g, dtype=v_local.dtype, device=v_local.device) # Generate gaussian noise with the same shape as v_local tensor  
+    #                    noise_dict[i] = noise
     #                    noise_norm_sq += torch.sum(noise * noise)
     #                else:
-    #                    noise_dict[name] = None
-#
+    #                    noise_dict[i] = None
     #            noise_norm = torch.sqrt(noise_norm_sq)
     #    
-    #            # 3️) Scala il rumore per avere norma controllata
-    #            scale = (k * delta_norm) / (noise_norm + 1e-12) # Scale serve a scalare il rumore il rumore, cosi che ||scale*noise|| = k*||Δ||
+    #            # 3. Scale the noise to control the norm 
+    #            scale = (k * delta_norm) / (noise_norm + 1e-12) # Scale is necessary so that ||scale*noise||=k*||delta||
     #            
-    #            # 4) Attacco Adattivo: Centra il rumore sull'aggiornamento locale onesto
-    #            for name, v_local in local_state.items():
+    #            # 4. Add scaled noise to the local model
+    #            for i, v_local in local_state.items():
     #                if torch.is_floating_point(v_local):
-    #                    poisoned[name] = v_local + scale * noise_dict[name]
+    #                    poisoned[i] = v_local + scale * noise_dict[i]
     #                else:
-    #                    poisoned[name] = v_local
+    #                    poisoned[i] = v_local
     #    
     #            model.load_state_dict(poisoned)
-    #            print(f"[!!! ATTACK (Client {partition_id})!!!] Noise injection attack with normalized noise (magnitude={k})")
+    #            print(f"[!!! ATTACK (Client {partition_id})!!!] ADAPTIVE NOISE ADDITION with normalized noise (magnitude k={k})")
     # ---------------------------------------------------------
 
     # ---------------------------------------------------------
-    # MODEL POISONING #3: Random Noise Attack --> solo sulla head
+    # MODEL POISONING #3.3.1: Adaptive Noise Attack (Head Only)
     # ---------------------------------------------------------
     #if is_malicious:
-    #    k = context.run_config.get("k-noise", 0.0)
+    #    k = context.run_config.get("k-noise", 0.0)  # Parameter that controls the strength of the attack
 #
-    #    seed_base = int(context.run_config.get("noise-seed-base", 1337))
-    #    seed = _make_seed(seed_base, partition_id)
+    #    seed = int(context.run_config.get("noise-seed-base", 1337)) + int(partition_id)
+    #    g = torch.Generator(device="cpu")
+    #    g.manual_seed(int(seed))
 #
     #    if k > 0.0:
     #        with torch.no_grad():
     #            local_state = model.state_dict()
     #            poisoned = {}
 #
-    #            # 1) Calcola la norma dell'update reale SOLO sulla head
+    #            # 1. Compute the norm of legitimate head layer update
     #            delta_norm_sq = 0.0
-    #            for name, v_local in local_state.items():
-    #                v_global = global_state[name]
-    #                if torch.is_floating_point(v_local) and "head" in name:
+    #            for i, v_local in local_state.items():
+    #                v_global = global_state[i]
+    #                if torch.is_floating_point(v_local) and "head" in i:
     #                    delta = v_local - v_global
     #                    delta_norm_sq += torch.sum(delta ** 2)
-    #            delta_norm = torch.sqrt(delta_norm_sq)
+    #            delta_norm = torch.sqrt(delta_norm_sq)  # Norm of legitimate head layer update
 #
-    #            # Rumore deterministico
-    #            g = torch.Generator(device="cpu")
-    #            g.manual_seed(int(seed))
-#
-    #            # 2) Genera rumore gaussiano SOLO per la head e calcola la sua norma
+    #            # 2. Generate noise for head layer and compute its norm
     #            noise_norm_sq = 0.0
     #            noise_dict = {}
-#
-    #            for name, v_local in local_state.items():
-    #                if torch.is_floating_point(v_local) and "head" in name:
-    #                    noise_cpu = torch.randn(
-    #                        tuple(v_local.detach().cpu().shape),
-    #                        generator=g,
-    #                        device="cpu",
-    #                        dtype=torch.float32,
-    #                    )
-    #                    noise = noise_cpu.to(v_local.device).type_as(v_local)
-    #                    noise_dict[name] = noise
+    #            for i, v_local in local_state.items():
+    #                if torch.is_floating_point(v_local) and "head" in i:
+    #                    noise = torch.randn(v_local.shape, generator=g, dtype=v_local.dtype, device=v_local.device) # Generate gaussian noise with the same shape as v_local tensor  
+    #                    noise_dict[i] = noise
     #                    noise_norm_sq += torch.sum(noise * noise)
     #                else:
-    #                    noise_dict[name] = None
-#
+    #                    noise_dict[i] = None
     #            noise_norm = torch.sqrt(noise_norm_sq)
 #
-    #            # 3) Scala il rumore in base alla norma dell'update della head
+    #            # 3. Scale the noise to control the norm 
     #            scale = (k * delta_norm) / (noise_norm + 1e-12)
 #
-    #            # 4) Applica il rumore SOLO alla head
-    #            for name, v_local in local_state.items():
-    #                if torch.is_floating_point(v_local) and "head" in name:
-    #                    poisoned[name] = v_local + scale * noise_dict[name]
+    #            # 4. Add scaled noise to the head layer of local model
+    #            for i, v_local in local_state.items():
+    #                if torch.is_floating_point(v_local) and "head" in i:
+    #                    poisoned[i] = v_local + scale * noise_dict[i]
     #                else:
-    #                    poisoned[name] = v_local
+    #                    poisoned[i] = v_local
 #
     #            model.load_state_dict(poisoned)
-    #            print(f"[!!! ATTACK (Client {partition_id})!!!] Head-only noise attack with normalized noise (magnitude={k}")
+    #            print(f"[!!! ATTACK (Client {partition_id})!!!] HEAD-ONLY ADAPTIVE NOISE ADDITION with normalized noise (magnitude={k})")
     # ---------------------------------------------------------
 
     # ---------------------------------------------------------
