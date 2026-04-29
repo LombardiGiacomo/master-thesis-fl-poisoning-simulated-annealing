@@ -810,13 +810,15 @@ from torch.utils.data import DataLoader, ConcatDataset
 from LSTMfederated.task import load_data, Net, test
 import pandas as pd
 
-def build_centralized_validation_loader(batch_size: int = 128) -> DataLoader:
+def build_centralized_validation_loader(batch_size: int = 64) -> DataLoader:
     """Costruisce un validation loader centralizzato unendo i test set dei client."""
     datasets = []
     for pid in range(5):
-        if pid != 3:
+        if pid != 1:
             _, testloader = load_data(partition_id=pid, batch_size=batch_size)
             datasets.append(testloader.dataset)
+        #_, testloader = load_data(partition_id=pid, batch_size=batch_size)
+        #datasets.append(testloader.dataset)
     merged = ConcatDataset(datasets)
     return DataLoader(merged, batch_size=batch_size, shuffle=False, drop_last=False)
 
@@ -887,9 +889,7 @@ def simulate_distance_defense_acceptance(
     client_updates_flat: np.ndarray,
     malicious_id: int,
 ) -> tuple[bool, np.ndarray, float, float, float]:
-    """Replica la difesa Distance-based.
-       Restituisce True se l'attaccante è accettato dalla difesa; False altrimenti.
-    """
+    """Replica la difesa Distance-based."""
     centroid = np.mean(client_updates_flat, axis=0)
     distances = np.linalg.norm(client_updates_flat - centroid, axis=1)
 
@@ -897,8 +897,11 @@ def simulate_distance_defense_acceptance(
     std_dist = float(np.std(distances))
     threshold = mean_dist + (1.0 * std_dist)
 
-    accepted = distances[malicious_id] <= threshold
-    return accepted, distances, threshold, mean_dist, std_dist
+    accepted_mask = [bool(d <= threshold) for d in distances]   # Contiene l'informazione se ogni client passa la difesa o no
+
+    accepted = accepted_mask[malicious_id]  # True se l'attaccante è accettato dalla difesa
+
+    return accepted, accepted_mask, distances, threshold, mean_dist, std_dist
 
 def evaluate_target_sequence(state_dict: dict, x_seq, y_target, device="cpu"):
     """
@@ -962,11 +965,7 @@ class DistanceBasedDefenseStrategyWithSA(FedAvg):
         sa_alpha: float = 0.95,
         sa_L: int = 30,
         sa_step_radius: float = 0.05,
-        sa_step_fraction: float = 0.03,
-        sa_step_min_fraction: float = 1e-3,     # Vediamo se toglierlo
         sa_reject_penalty: float = 1e6,
-        sa_history_weight: float = 0.05,        # Vediamo se toglierlo
-        sa_history_enabled: bool = True,        # Vediamo se toglierlo
         sa_val_batch_size: int = 64,
         **kwargs,
     ):
@@ -979,31 +978,24 @@ class DistanceBasedDefenseStrategyWithSA(FedAvg):
         self.malicious_id = int(malicious_id)   # id del client malevolo
         self.metrics = {"TP": 0, "TN": 0, "FP": 0, "FN": 0}
 
-        self.sa_T0 = float(sa_T0)                           # Temperatura iniziale 
-        self.sa_Tmin = float(sa_Tmin)                       # Temperatura finale
-        self.sa_alpha = float(sa_alpha)                     # Cooling ratio
-        self.sa_L = int(sa_L)                               # Numero di soluzioni candidate valutate per ogni stadio di temperatura
-        self.sa_step_radius = float(sa_step_radius)         # Raggio della perturbazione
-        self.sa_step_fraction = float(sa_step_fraction)     # Per calcolare il raggio iniziale della perturbazione
-        self.sa_step_min_fraction = float(sa_step_min_fraction) # Per evitare che il passo collassi quando la temperatura è bassa
-        self.sa_reject_penalty = float(sa_reject_penalty)   # Penalità se il candidato viene scartato
-        self.sa_history_weight = float(sa_history_weight)   # Peso del termine storico
-        self.sa_history_enabled = bool(sa_history_enabled)  
+        self.sa_T0 = sa_T0                              # Temperatura iniziale 
+        self.sa_Tmin = sa_Tmin                          # Temperatura finale
+        self.sa_alpha = sa_alpha                        # Cooling ratio
+        self.sa_L = sa_L                                # Numero di soluzioni candidate valutate per ogni stadio di temperatura
+        self.sa_step_radius = sa_step_radius            # Raggio della perturbazione
+        self.sa_reject_penalty = sa_reject_penalty      # Penalità se il candidato viene scartato
 
         self.device = torch.device("cpu")
         self.val_loader = build_centralized_validation_loader(batch_size=sa_val_batch_size)
-
-        self.adv_update_history: list[np.ndarray] = []      # Memoria degli update malevoli usati ai round precedenti
-        self.adv_delta_history: list[np.ndarray] = []       # Memoria delle perturbazioni trovate ai round precedenti
 
     def _extract_round_data(self, replies_list: list[Message]):
         """Estrazione dei dati del round. 
             Estrae gli id dei client, i modelli locali come state_dict, gli update flatten, pesi per FedAvg simulato.
         """
-        client_ids = []     # gli ID dei client
-        local_sds = []      # i modelli locali dei client
-        updates_flat = []   # gli update flatten
-        num_examples = []   # i pesi per FedAvg, inviati dai client nelle metriche
+        client_ids = []     # ID dei client
+        local_sds = []      # Modelli locali dei client
+        updates_flat = []   # Updates flatten
+        num_examples = []   # Pesi per FedAvg, inviati dai client nelle metriche
 
         for msg in replies_list:
             local_sd = msg.content["arrays"].to_torch_state_dict()
@@ -1016,18 +1008,18 @@ class DistanceBasedDefenseStrategyWithSA(FedAvg):
             updates_flat.append(state_dict_to_update_flat(local_sd, self._global_sd))
             num_examples.append(n_i)
 
-        return client_ids, local_sds, np.array(updates_flat, dtype=np.float64), num_examples
+        #return client_ids, local_sds, np.array(updates_flat, dtype=np.float64), num_examples
+        return client_ids, local_sds, np.array(updates_flat), num_examples
 
     def _energy(
         self,
-        candidate_delta: np.ndarray,    # la soluzione candidata del SA
-        base_legit_update: np.ndarray,  # update legittimo del client malevolo
-        all_updates_flat: np.ndarray,   # tutti gli update del round
-        malicious_id: int,             # posizione del malevolo negli update
-        local_sds: list[dict],          # modelli locali
-        num_examples: list[float],      # pesi FedAvg
-        base_mse: float,                # MSE del round senza perturbazione
-        head_mask: np.ndarray,          
+        candidate_delta: np.ndarray,    # Soluzione candidata del SA
+        base_legit_update: np.ndarray,  # Update legittimo del client malevolo
+        all_updates_flat: np.ndarray,   # Tutti gli update del round flattened
+        malicious_id: int,              # Posizione del client malevolo negli update
+        local_sds: list[dict],          # Modelli locali
+        num_examples: list[float],      # Pesi di addestramento per FedAvg
+        base_mse: float,                # MSE del round senza perturbazione        
     ) -> tuple[float, bool, float]:
         """
         Energia:
@@ -1040,12 +1032,12 @@ class DistanceBasedDefenseStrategyWithSA(FedAvg):
         Xcand[malicious_id] = candidate_update
 
         # Verifica se il candidato viene accettato o scartato dalla difesa: se viene scartato l'energia è enorme
-        accepted, _, _, _, _ = simulate_distance_defense_acceptance(Xcand, malicious_id)
+        accepted, accepted_mask, _, _, _, _ = simulate_distance_defense_acceptance(Xcand, malicious_id)
         if not accepted:
             log(logging.INFO, f"Candidate delta discarded from defense")
             return self.sa_reject_penalty, False, float("nan")
 
-        # Ricostruzione del modello locale (state_dict locali) con il candidato malevolo
+        # Ricostruzione del modello locale avvelenato
         poisoned_local_sd = local_sd_from_flat_update(
             candidate_update,
             reference_local_sd=local_sds[malicious_id],
@@ -1056,115 +1048,28 @@ class DistanceBasedDefenseStrategyWithSA(FedAvg):
         local_sds_eval[malicious_id] = poisoned_local_sd
 
         # Ricostruiamo la difesa per capire quali client sarebbero accettati nel round simulato
-        accepted_mask = []
-        centroid = np.mean(Xcand, axis=0)
-        distances = np.linalg.norm(Xcand - centroid, axis=1)
-        threshold = float(np.mean(distances) + np.std(distances))
-        for d in distances:
-            accepted_mask.append(d <= threshold)
+        #accepted_mask = []
+        #centroid = np.mean(Xcand, axis=0)
+        #distances = np.linalg.norm(Xcand - centroid, axis=1)
+        #threshold = float(np.mean(distances) + np.std(distances))
+        #for d in distances:
+        #    accepted_mask.append(d <= threshold)
 
-        # Facciamo FedAvg simulato: calcoliamo il modello globale simulato e poi l'MSE
         accepted_sds = [sd for sd, ok in zip(local_sds_eval, accepted_mask) if ok]
         accepted_w = [w for w, ok in zip(num_examples, accepted_mask) if ok]
 
         if len(accepted_sds) == 0:
             return self.sa_reject_penalty, False, float("nan")
-
+        
+        # Facciamo FedAvg simulato: calcoliamo il modello globale simulato e poi l'MSE
         agg_sd = weighted_average_state_dicts(accepted_sds, accepted_w)
         mse = evaluate_model_mse(agg_sd, self.val_loader, self.device)
 
         rel_mse = mse / (base_mse + 1e-12)
-        #delta_mse = mse - base_mse
-
-        # USO COSINE SIMILARITY DELL'UPDATE ATTUALE CON QUELLO DEL ROUND PRECEDENTE
-        #hist_penalty = 0.0
-        #if self.sa_history_enabled and len(self.adv_update_history) > 0:
-        #    prev_update = self.adv_update_history[-1]
-        #    cos_sim = np.dot(candidate_update, prev_update) / (
-        #        (np.linalg.norm(candidate_update) + 1e-12) *
-        #        (np.linalg.norm(prev_update) + 1e-12)
-        #    )
-        #    hist_penalty = 1.0 - cos_sim
-
-        # USO COSINE SIMILARITY DELL'UPDATE ATTUALE CON IL CENTROIDE DEGLI UPDATE
-        #hist_penalty = 0.0
-        #if self.sa_history_enabled and len(self.adv_update_history) > 0:
-        #    hist_centroid = np.mean(np.stack(self.adv_update_history, axis=0), axis=0)
-        #    cos_sim = np.dot(candidate_update, hist_centroid) / (
-        #        (np.linalg.norm(candidate_update) + 1e-12) *
-        #        (np.linalg.norm(hist_centroid) + 1e-12)
-        #    )
-        #    hist_penalty = 1.0 - cos_sim
-
-        # USO COSINE SIMILARITY DELLA HEAD DELL'UPDATE ATTUALE CON LA HEAD DEL CENTROIDE DEGLI UPDATE
-        #hist_penalty = 0.0
-        #if self.sa_history_enabled and len(self.adv_update_history) > 0:
-        #    hist_centroid = np.mean(np.stack(self.adv_update_history, axis=0), axis=0)
-#
-        #    candidate_head = candidate_update * head_mask
-        #    hist_head = hist_centroid * head_mask
-#
-        #    cand_norm = np.linalg.norm(candidate_head)
-        #    hist_norm = np.linalg.norm(hist_head)
-#
-        #    if cand_norm > 1e-12 and hist_norm > 1e-12:
-        #        cos_sim = np.dot(candidate_head, hist_head) / (
-        #            (cand_norm + 1e-12) * (hist_norm + 1e-12)
-        #        )
-        #        cos_sim = float(np.clip(cos_sim, -1.0, 1.0))
-        #        hist_penalty = 1.0 - cos_sim
-        #    else:
-        #        hist_penalty = 0.0
-
-        # Penalità di coerenza storica dal secondo round: dal secondo round in poi confrontiamo il nuovo update candidato con la media degli
-        # update malevoli precedenti
-        #hist_penalty = 0.0
-        #if self.sa_history_enabled and len(self.adv_update_history) > 0:
-        #    hist_centroid = np.mean(np.stack(self.adv_update_history, axis=0), axis=0)
-        #    hist_penalty = np.linalg.norm(candidate_update - hist_centroid) / (
-        #        np.linalg.norm(hist_centroid) + 1e-12
-        #    )
-        #if self.sa_history_enabled and len(self.adv_delta_history) > 0:
-        #    hist_centroid = np.mean(np.stack(self.adv_delta_history, axis=0), axis=0)
-        #    hist_penalty = np.linalg.norm(candidate_delta - hist_centroid) / (
-        #        np.linalg.norm(hist_centroid) + 1e-12
-        #    )
-
-        # Energia:
-        #   -rel_mse perchè vogliamo massimizzare l'MSE
-        #   +history_weight * hist_penalty perchè update troppo lontani dalla storia
-        #energy = -rel_mse + self.sa_history_weight * hist_penalty
-        #energy = -delta_mse + self.sa_history_weight * hist_penalty
-
-        # Danno relativo compresso
-        #log_rel_mse = np.log((mse + 1e-12) / (base_mse + 1e-12))
-
-        # Penalità storica sulla sola head
-        #hist_penalty = 0.0
-        #if self.sa_history_enabled and len(self.adv_update_history) > 0:
-        #    hist_centroid = np.mean(np.stack(self.adv_update_history, axis=0), axis=0)
-#
-        #    candidate_head = candidate_update * head_mask
-        #    hist_head = hist_centroid * head_mask
-#
-        #    hist_norm = np.linalg.norm(hist_head)
-        #    if hist_norm > 1e-12:
-        #        hist_penalty = np.linalg.norm(candidate_head - hist_head) / (hist_norm + 1e-12)
-        #    else:
-        #        hist_penalty = 0.0
-
-        #energy = -log_rel_mse + self.sa_history_weight * hist_penalty
         
         energy = -rel_mse
 
-        #log(logging.INFO,
-        #    f"log_rel_mse={log_rel_mse:.6f} hist_penalty={hist_penalty:.6f} "
-        #    f"weighted_hist={self.sa_history_weight * hist_penalty:.6f} "
-        #    f"energy={energy:.6f} "
-        #    f"mse={mse:.6f}"
-        #)
-
-        log(logging.INFO, f"rel_mse={rel_mse:.6f} energy={energy:.6f} ")
+        log(logging.INFO, f"rel_mse={rel_mse:.6f} mse={mse:.6f} energy={energy:.6f} ")
 
         return float(energy), True, float(mse)
     
@@ -1187,7 +1092,7 @@ class DistanceBasedDefenseStrategyWithSA(FedAvg):
         Xcand[malicious_id] = candidate_update
 
         # Verifica se il candidato viene accettato o scartato dalla difesa: se viene scartato l'energia è enorme
-        #accepted, _, _, _, _ = simulate_distance_defense_acceptance(Xcand, malicious_id)
+        #accepted, _, _, _, _, _ = simulate_distance_defense_acceptance(Xcand, malicious_id)
         #if not accepted:
         #    log(logging.INFO, f"Candidate delta discarded from defense")
         #    return self.sa_reject_penalty, False, float("nan")
@@ -1238,7 +1143,7 @@ class DistanceBasedDefenseStrategyWithSA(FedAvg):
 
         return float(energy), True, prediction
 
-    def _energy_selective_backdoor_attack(
+    def _energy_targeted_attack(
         self,
         candidate_delta: np.ndarray,    # la soluzione candidata del SA
         base_legit_update: np.ndarray,  # update legittimo del client malevolo
@@ -1246,7 +1151,8 @@ class DistanceBasedDefenseStrategyWithSA(FedAvg):
         malicious_id: int,             # posizione del malevolo negli update
         local_sds: list[dict],          # modelli locali
         num_examples: list[float],      # pesi FedAvg
-        base_mse: float,                # MSE del round senza perturbazione
+        base_mse_poison: float,
+        base_mse_clean: float,
         x_poison: list[np.ndarray],     # sequenze da avvelenare (vogliamo alto errore)
         y_poison: list[float],          # target reali delle sequenze da avvelenare
         x_clean: list[np.ndarray],      # sequenze da preservare (vogliamo basso errore)
@@ -1266,28 +1172,29 @@ class DistanceBasedDefenseStrategyWithSA(FedAvg):
         Xcand[malicious_id] = candidate_update
 
         # Verifica se il candidato viene accettato o scartato dalla difesa: se viene scartato l'energia è enorme
-        accepted, _, _, _, _ = simulate_distance_defense_acceptance(Xcand, malicious_id)
+        accepted, accepted_mask, _, _, _, _ = simulate_distance_defense_acceptance(Xcand, malicious_id)
         if not accepted:
             log(logging.INFO, f"Candidate delta discarded from defense")
             return self.sa_reject_penalty, False, float("nan"), float("nan"), float("nan")
 
-        # Ricostruzione del modello locale (state_dict locali) con il candidato malevolo
+        # Ricostruzione del modello locale (state_dict locali) del candidato malevolo a partire dall'update
         poisoned_local_sd = local_sd_from_flat_update(
             candidate_update,
             reference_local_sd=local_sds[malicious_id],
             global_sd=self._global_sd,
         )
 
+        # Modelli dei client con quello avvelenato per il client malevolo 
         local_sds_eval = [deepcopy(sd) for sd in local_sds]
         local_sds_eval[malicious_id] = poisoned_local_sd
 
         # Ricostruiamo la difesa per capire quali client sarebbero accettati nel round simulato
-        accepted_mask = []
-        centroid = np.mean(Xcand, axis=0)
-        distances = np.linalg.norm(Xcand - centroid, axis=1)
-        threshold = float(np.mean(distances) + np.std(distances))
-        for d in distances:
-            accepted_mask.append(d <= threshold)
+        #accepted_mask = []
+        #centroid = np.mean(Xcand, axis=0)
+        #distances = np.linalg.norm(Xcand - centroid, axis=1)
+        #threshold = float(np.mean(distances) + np.std(distances))
+        #for d in distances:
+        #    accepted_mask.append(d <= threshold)
 
         # Facciamo FedAvg simulato: calcoliamo il modello globale simulato e poi l'MSE
         accepted_sds = [sd for sd, ok in zip(local_sds_eval, accepted_mask) if ok]
@@ -1318,10 +1225,12 @@ class DistanceBasedDefenseStrategyWithSA(FedAvg):
         #mse = evaluate_model_mse(agg_sd, self.val_loader, self.device)
         mse = float("nan")
 
+        rel_mse_poison = mse_poison / (base_mse_poison + 1e-12)
+        rel_mse_clean = mse_clean / (base_mse_clean + 1e-12)
         # Energia:
-        #   Massimizzare l'MSE sequenze poison: -mse_poison
-        #   Minimizzare l'MSE sequenze clean: +lambda_clean * mse_clean
-        energy = -mse_poison + lambda_clean*mse_clean
+        #   Massimizzare l'MSE sequenze poison: -rel_mse_poison
+        #   Minimizzare l'MSE sequenze clean: +lambda_clean * rel_mse_clean
+        energy = -rel_mse_poison + lambda_clean*rel_mse_clean
         log(logging.INFO,
             f"mse_poison={mse_poison:.6f} mse_clean={mse_clean:.6f} lambda_clean={lambda_clean} energy={energy:.6f} "
             f"total_mse={mse:.6f} "
@@ -1339,18 +1248,20 @@ class DistanceBasedDefenseStrategyWithSA(FedAvg):
         num_examples: list[float],
     ) -> np.ndarray:
         """
-        Simulated Annealing vero e proprio: cerca la perturbazione migliore da aggiungere all'update del client malevolo nel round corrente.
+        Simulated Annealing: cerca la perturbazione migliore da aggiungere all'update del client malevolo nel round corrente.
         Soluzione iniziale: delta = 0
         Mossa: delta' = delta + rho_T * z / ||z||
         """
 
         # Calcolo l'MSE del round senza perturbazione
         Xbase = all_updates_flat.copy()
-        Xbase[malicious_id] = base_legit_update
-        centroid = np.mean(Xbase, axis=0)
-        distances = np.linalg.norm(Xbase - centroid, axis=1)
-        threshold = float(np.mean(distances) + np.std(distances))
-        accepted_mask = [d <= threshold for d in distances]
+        #Xbase[malicious_id] = base_legit_update
+        #centroid = np.mean(Xbase, axis=0)
+        #distances = np.linalg.norm(Xbase - centroid, axis=1)
+        #threshold = float(np.mean(distances) + np.std(distances))
+        #accepted_mask = [d <= threshold for d in distances]
+
+        _, accepted_mask, _, _, _, _ = simulate_distance_defense_acceptance(Xbase, malicious_id)
 
         base_sds = [sd for sd, ok in zip(local_sds, accepted_mask) if ok]
         base_w = [w for w, ok in zip(num_examples, accepted_mask) if ok]
@@ -1363,6 +1274,19 @@ class DistanceBasedDefenseStrategyWithSA(FedAvg):
         # la migliore soluzione visitata. Infatti, SA può accettare soluzioni peggiori
         d = base_legit_update.shape[0]
         delta = np.zeros(d, dtype=np.float64)
+
+        curr_energy, _, curr_mse = self._energy(
+            candidate_delta=delta,
+            base_legit_update=base_legit_update,
+            all_updates_flat=all_updates_flat,
+            malicious_id=malicious_id,
+            local_sds=local_sds,
+            num_examples=num_examples,
+            base_mse=true_base_mse,
+        )
+        best_delta = delta.copy()
+        best_energy = curr_energy
+        best_mse = curr_mse
 
         # --- 1. CREAZIONE DELLA MASCHERA 'HEAD' ---
         head_mask = np.zeros(d, dtype=np.float64)
@@ -1377,20 +1301,6 @@ class DistanceBasedDefenseStrategyWithSA(FedAvg):
                 offset += numel
         # --------------------------------------------------------
 
-        curr_energy, _, curr_mse = self._energy(
-            candidate_delta=delta,
-            base_legit_update=base_legit_update,
-            all_updates_flat=all_updates_flat,
-            malicious_id=malicious_id,
-            local_sds=local_sds,
-            num_examples=num_examples,
-            base_mse=true_base_mse,
-            head_mask=head_mask
-        )
-        best_delta = delta.copy()
-        best_energy = curr_energy
-        best_mse = curr_mse
-
         # Ciclo sulle temperature
         # Per ogni stadio della temperatura:
         #   1) Generiamo una configurazione candidato ammissibile tramite una piccola perturbazione casuale della configurazione corrente.
@@ -1404,21 +1314,11 @@ class DistanceBasedDefenseStrategyWithSA(FedAvg):
         energy_tol = 1e-7
         no_improve_stages = 0
         prev_best_energy = best_energy
-        freeze_stages = 2
-
-        #base_norm = np.linalg.norm(base_legit_update) + 1e-12
-        #rho0 = self.sa_step_fraction * base_norm            # Raggio della perturbazione inizialmente
-        #rho_min = self.sa_step_min_fraction * base_norm     # Raggio minimo della perturbazione
-
-        #head_base = base_legit_update * head_mask
-        #head_norm = np.linalg.norm(head_base) + 1e-12
-        #rho0 = self.sa_step_fraction * head_norm
-        #rho_min = self.sa_step_min_fraction * head_norm
+        freeze_stages = 0
 
         while T > self.sa_Tmin:
             accepted_moves = 0
             rho_T = self.sa_step_radius * (T / self.sa_T0)
-            #rho_T = max(rho_min, self.sa_step_radius * np.sqrt(T / self.sa_T0))
 
             log(logging.INFO, f"[ROUND {server_round}] SA stage={stage} T={T:.6f}")
 
@@ -1427,10 +1327,9 @@ class DistanceBasedDefenseStrategyWithSA(FedAvg):
                 z = np.random.randn(d).astype(np.float64)
                 # L'ampiezza della perturbazione ce la da rho_T
 
-                # --- 2. APPLICAZIONE MASCHERA ---
-                # Azzera tutto il rumore tranne quello in corrispondenza della 'head'
-                z = z * head_mask
-                # ----------------------------------------------
+                # --- 2. APPLICAZIONE MASCHERA ---------
+                z = z * head_mask   # Azzera tutto il rumore tranne quello in corrispondenza della 'head'
+                # --------------------------------------
 
                 z_norm = np.linalg.norm(z) + 1e-12
 
@@ -1445,7 +1344,6 @@ class DistanceBasedDefenseStrategyWithSA(FedAvg):
                     local_sds=local_sds,
                     num_examples=num_examples,
                     base_mse=true_base_mse,
-                    head_mask=head_mask
                 )
 
                 if not cand_ok:
@@ -1696,7 +1594,7 @@ class DistanceBasedDefenseStrategyWithSA(FedAvg):
 
         return best_delta
 
-    def _run_simulated_annealing_selective_backdoor(
+    def _run_simulated_annealing_targeted(
         self,
         server_round: int,
         base_legit_update: np.ndarray,
@@ -1706,25 +1604,40 @@ class DistanceBasedDefenseStrategyWithSA(FedAvg):
         num_examples: list[float],
     ) -> np.ndarray:
 
-        # Calcolo l'MSE del round senza perturbazione
-        Xbase = all_updates_flat.copy()
-        Xbase[malicious_id] = base_legit_update
-        centroid = np.mean(Xbase, axis=0)
-        distances = np.linalg.norm(Xbase - centroid, axis=1)
-        threshold = float(np.mean(distances) + np.std(distances))
-        accepted_mask = [d <= threshold for d in distances]
-
-        base_sds = [sd for sd, ok in zip(local_sds, accepted_mask) if ok]
-        base_w = [w for w, ok in zip(num_examples, accepted_mask) if ok]
-        base_agg_sd = weighted_average_state_dicts(base_sds, base_w)
-        true_base_mse = evaluate_model_mse(base_agg_sd, self.val_loader, self.device)
-
-        # --- Setup sequenze (una volta sola, fuori dal loop SA) ---
+        # Setup sequenze
         x_poison, y_poison = load_sequences("./SequencesBackdoorSA/high_pollution_sequences.csv", "./SequencesBackdoorSA/high_pollution_targets.csv")
         x_clean,  y_clean  = load_sequences("./SequencesBackdoorSA/low_pollution_sequences.csv",  "./SequencesBackdoorSA/low_pollution_targets.csv")
         #x_poison, y_poison = load_sequences("./SequencesBackdoorSA/low_pollution_sequences.csv",  "./SequencesBackdoorSA/low_pollution_targets.csv")
         #x_clean,  y_clean  = load_sequences("./SequencesBackdoorSA/high_pollution_sequences.csv", "./SequencesBackdoorSA/high_pollution_targets.csv")
         lambda_clean = 0.5
+
+        # Simulo la difesa per sapere chi viene accettato
+        Xbase = all_updates_flat.copy()
+        #Xbase[malicious_id] = base_legit_update
+        #centroid = np.mean(Xbase, axis=0)
+        #distances = np.linalg.norm(Xbase - centroid, axis=1)
+        #threshold = float(np.mean(distances) + np.std(distances))
+        #accepted_mask = [d <= threshold for d in distances]
+        _, accepted_mask, _, _, _, _ = simulate_distance_defense_acceptance(Xbase, malicious_id)
+
+        base_sds = [sd for sd, ok in zip(local_sds, accepted_mask) if ok]
+        base_w = [w for w, ok in zip(num_examples, accepted_mask) if ok]
+        base_agg_sd = weighted_average_state_dicts(base_sds, base_w)
+
+        # Calcolo l'MSE del round sulle sequenze poison senza perturbazione
+        mse_poison_list = []
+        for x_seq, y_t in zip(x_poison, y_poison):
+            mse_i, _ = evaluate_target_sequence(base_agg_sd, x_seq, y_t, "cpu")
+            mse_poison_list.append(mse_i)
+        base_mse_poison = np.mean(mse_poison_list)
+
+        # Calcolo l'MSE del round sulle sequenze clean senza perturbazione
+        mse_clean_list = []
+        for x_seq, y_t in zip(x_clean, y_clean):
+            mse_i, _ = evaluate_target_sequence(base_agg_sd, x_seq, y_t, "cpu")
+            mse_clean_list.append(mse_i)
+        base_mse_clean = np.mean(mse_clean_list)
+
         # Soluzione iniziale delta = 0, cioè si parte dall'update legittimo.
         # Calcoliamo quindi l'energia iniziale, che sarà l'energia corrente, e il valore di mse iniziale, che sarà quello corrente.
         # Ci manteniamo soluzione corrente (curr_delta) e migliore soluzione trovata finora (best_delta): questo perche in SA la soluzione corrente non è necessariamente
@@ -1732,27 +1645,15 @@ class DistanceBasedDefenseStrategyWithSA(FedAvg):
         d = base_legit_update.shape[0]
         delta = np.zeros(d, dtype=np.float64)
 
-        # --- 1. CREAZIONE DELLA MASCHERA 'HEAD' ---
-        head_mask = np.zeros(d, dtype=np.float64)
-        offset = 0
-        reference_sd = local_sds[malicious_id]
-        
-        for k, v in reference_sd.items():
-            if torch.is_floating_point(v):
-                numel = v.numel()
-                if "head" in k: 
-                    head_mask[offset : offset + numel] = 1.0
-                offset += numel
-        # --------------------------------------------------------
-
-        curr_energy, _, curr_mse_poison, curr_mse_clean, curr_mse = self._energy_selective_backdoor_attack(
+        curr_energy, _, curr_mse_poison, curr_mse_clean, curr_mse = self._energy_targeted_attack(
             candidate_delta=delta,
             base_legit_update=base_legit_update,
             all_updates_flat=all_updates_flat,
             malicious_id=malicious_id,
             local_sds=local_sds,
             num_examples=num_examples,
-            base_mse=true_base_mse,
+            base_mse_poison=base_mse_poison,
+            base_mse_clean=base_mse_clean,
             x_poison=x_poison,   # high pollution → massimizza MSE
             y_poison=y_poison,
             x_clean=x_clean,     # low pollution  → minimizza MSE
@@ -1769,6 +1670,19 @@ class DistanceBasedDefenseStrategyWithSA(FedAvg):
         init_mse_clean = curr_mse_clean
         init_global_mse = curr_mse
 
+        # --- 1. CREAZIONE DELLA MASCHERA 'HEAD' ---
+        head_mask = np.zeros(d, dtype=np.float64)
+        offset = 0
+        reference_sd = local_sds[malicious_id]
+        
+        for k, v in reference_sd.items():
+            if torch.is_floating_point(v):
+                numel = v.numel()
+                if "head" in k: 
+                    head_mask[offset : offset + numel] = 1.0
+                offset += numel
+        # --------------------------------------------------------
+
         # Ciclo sulle temperature
         # Per ogni stadio della temperatura:
         #   1) Generiamo una configurazione candidato ammissibile tramite una piccola perturbazione casuale della configurazione corrente.
@@ -1782,12 +1696,11 @@ class DistanceBasedDefenseStrategyWithSA(FedAvg):
         energy_tol = 1e-7
         no_improve_stages = 0
         prev_best_energy = best_energy
-        freeze_stages = 2
+        freeze_stages = 0
 
         while T > self.sa_Tmin:
             accepted_moves = 0
             rho_T = self.sa_step_radius * (T / self.sa_T0)
-            #rho_T = max(rho_min, self.sa_step_radius * np.sqrt(T / self.sa_T0))
 
             log(logging.INFO, f"[ROUND {server_round}] SA stage={stage} T={T:.6f}")
 
@@ -1806,14 +1719,15 @@ class DistanceBasedDefenseStrategyWithSA(FedAvg):
                 cand_delta = delta + rho_T * (z / z_norm)
 
                 # Energia e mse della soluzione candidata
-                cand_energy, cand_ok, cand_mse_poison, cand_mse_clean, cand_mse = self._energy_selective_backdoor_attack(
+                cand_energy, cand_ok, cand_mse_poison, cand_mse_clean, cand_mse = self._energy_targeted_attack(
                     candidate_delta=cand_delta,
                     base_legit_update=base_legit_update,
                     all_updates_flat=all_updates_flat,
                     malicious_id=malicious_id,
                     local_sds=local_sds,
                     num_examples=num_examples,
-                    base_mse=true_base_mse,
+                    base_mse_poison=base_mse_poison,
+                    base_mse_clean=base_mse_clean,
                     x_poison=x_poison,   # high pollution → massimizza MSE
                     y_poison=y_poison,
                     x_clean=x_clean,     # low pollution  → minimizza MSE
@@ -1930,7 +1844,7 @@ class DistanceBasedDefenseStrategyWithSA(FedAvg):
             mal_idx = client_ids.index(self.malicious_id)
             base_legit_update = client_updates_flat[mal_idx].copy()
 
-            best_delta = self._run_simulated_annealing(
+            best_delta = self._run_simulated_annealing_targeted(
                 server_round=server_round,
                 base_legit_update=base_legit_update,
                 all_updates_flat=client_updates_flat,
@@ -1942,16 +1856,12 @@ class DistanceBasedDefenseStrategyWithSA(FedAvg):
             # Sostituzione dell'update malevolo
             poisoned_update = base_legit_update + best_delta
 
-            # Salviamo la storia degli update per i round successivi
-            self.adv_update_history.append(poisoned_update.copy())
-
             # Ricostruiamo il modello locale malevolo e lo reinseriamo in replies_list
             poisoned_local_sd = local_sd_from_flat_update(
                 poisoned_update,
                 reference_local_sd=local_sds[mal_idx],
                 global_sd=self._global_sd,
             )
-
             replies_list[mal_idx].content["arrays"] = ArrayRecord(poisoned_local_sd)
             client_updates_flat[mal_idx] = poisoned_update
 
@@ -2068,11 +1978,7 @@ def main(grid: Grid, context: Context) -> None:
         sa_alpha=0.95,
         sa_L=20,
         sa_step_radius=0.1,
-        sa_step_fraction=0.1,
-        sa_step_min_fraction=0.001,     # Si potrà togliere
         sa_reject_penalty=1e6,
-        sa_history_weight=0.05,         # Vediamo se toglierlo
-        sa_history_enabled=True,        # Vediamo se toglierlo
         sa_val_batch_size=64,
     )
 
