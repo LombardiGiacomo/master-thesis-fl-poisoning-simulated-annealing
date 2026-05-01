@@ -178,7 +178,7 @@ Round 18: init_mse_poison=0.013428, init_mse_clean=0.000200, init_global_mse=nan
 Round 19: init_mse_poison=0.014731, init_mse_clean=0.000175, init_global_mse=nan -> best_mse_poison=0.028811, best_mse_clean=0.002414, global_mse=nan
 Round 20: init_mse_poison=0.013577, init_mse_clean=0.000209, init_global_mse=nan -> best_mse_poison=0.016421, best_mse_clean=0.000620, global_mse=nan
 
-=== SA Selective Backdoor Parameters ===
+=== SA Selective Backdoor Parameters: the sequences whose MSE is increased are those referred to High Pollution ===
 sa_T0=1.0
 sa_Tmin=0.001
 sa_alpha=0.95
@@ -207,3 +207,246 @@ Round 17: init_mse_poison=0.014671, init_mse_clean=0.000222, init_global_mse=nan
 Round 18: init_mse_poison=0.013411, init_mse_clean=0.000254, init_global_mse=nan -> best_mse_poison=0.014343, best_mse_clean=0.000173, global_mse=nan
 Round 19: init_mse_poison=0.014137, init_mse_clean=0.000226, init_global_mse=nan -> best_mse_poison=0.014838, best_mse_clean=0.000181, global_mse=nan
 Round 20: init_mse_poison=0.014888, init_mse_clean=0.000178, init_global_mse=nan -> best_mse_poison=0.023017, best_mse_clean=0.000197, global_mse=nan
+
+=== SA Selective Backdoor Parameters the sequences whose MSE is increased are those referred to Low Pollution===
+sa_T0=1.0
+sa_Tmin=0.001
+sa_alpha=0.95
+sa_L=20
+sa_step_radius=0.1
+lambda_clean=0.5
+patience=5
+========================================
+Round 1: init_mse_poison=0.000885, init_mse_clean=0.016655, init_global_mse=nan -> best_mse_poison=0.001292, best_mse_clean=0.015471, global_mse=nan
+Round 2: init_mse_poison=0.000440, init_mse_clean=0.013017, init_global_mse=nan -> best_mse_poison=0.000650, best_mse_clean=0.012515, global_mse=nan
+Round 3: init_mse_poison=0.000379, init_mse_clean=0.012121, init_global_mse=nan -> best_mse_poison=0.073612, best_mse_clean=0.093598, global_mse=nan
+Round 4: init_mse_poison=0.000314, init_mse_clean=0.012853, init_global_mse=nan -> best_mse_poison=0.000607, best_mse_clean=0.011472, global_mse=nan
+Round 5: init_mse_poison=0.000313, init_mse_clean=0.012299, init_global_mse=nan -> best_mse_poison=0.058083, best_mse_clean=0.096187, global_mse=nan
+Round 6: init_mse_poison=nan, init_mse_clean=nan, init_global_mse=nan -> best_mse_poison=nan, best_mse_clean=nan, global_mse=nan
+Round 7: init_mse_poison=0.000265, init_mse_clean=0.012615, init_global_mse=nan -> best_mse_poison=0.119962, best_mse_clean=0.092517, global_mse=nan
+Round 8: init_mse_poison=nan, init_mse_clean=nan, init_global_mse=nan -> best_mse_poison=nan, best_mse_clean=nan, global_mse=nan
+Round 9: init_mse_poison=0.000251, init_mse_clean=0.013176, init_global_mse=nan -> best_mse_poison=0.039104, best_mse_clean=0.028541, global_mse=nan
+Round 10: init_mse_poison=0.000261, init_mse_clean=0.013354, init_global_mse=nan -> best_mse_poison=0.024948, best_mse_clean=0.015682, global_mse=nan
+Round 11: init_mse_poison=0.000260, init_mse_clean=0.013398, init_global_mse=nan -> best_mse_poison=0.044342, best_mse_clean=0.074729, global_mse=nan
+Round 12: init_mse_poison=0.000240, init_mse_clean=0.013766, init_global_mse=nan -> best_mse_poison=0.050856, best_mse_clean=0.036546, global_mse=nan
+Round 13: init_mse_poison=0.000257, init_mse_clean=0.013553, init_global_mse=nan -> best_mse_poison=0.044903, best_mse_clean=0.028479, global_mse=nan
+Round 14: init_mse_poison=0.000281, init_mse_clean=0.013460, init_global_mse=nan -> best_mse_poison=0.047229, best_mse_clean=0.024549, global_mse=nan
+Round 15: init_mse_poison=0.000290, init_mse_clean=0.013655, init_global_mse=nan -> best_mse_poison=0.059577, best_mse_clean=0.079013, global_mse=nan
+Round 16: init_mse_poison=0.000243, init_mse_clean=0.013831, init_global_mse=nan -> best_mse_poison=0.061361, best_mse_clean=0.036929, global_mse=nan
+Round 17: init_mse_poison=0.000274, init_mse_clean=0.013451, init_global_mse=nan -> best_mse_poison=0.066063, best_mse_clean=0.045529, global_mse=nan
+Round 18: init_mse_poison=0.000297, init_mse_clean=0.013366, init_global_mse=nan -> best_mse_poison=0.033043, best_mse_clean=0.021894, global_mse=nan
+Round 19: init_mse_poison=0.000322, init_mse_clean=0.013872, init_global_mse=nan -> best_mse_poison=0.100089, best_mse_clean=0.050297, global_mse=nan
+Round 20: init_mse_poison=0.000286, init_mse_clean=0.013722, init_global_mse=nan -> best_mse_poison=0.063182, best_mse_clean=0.030786, global_mse=nan
+
+=== SA Selective Backdoor Parameters: the sequences whose MSE is increased are those referred to Low Pollution===
+sa_T0=1.0
+sa_Tmin=0.001
+sa_alpha=0.95
+sa_L=50
+sa_step_radius=0.1
+lambda_clean=0.5
+patience=5
+========================================
+Round 1: init_mse_poison=0.001152, init_mse_clean=0.017240, init_global_mse=nan -> best_mse_poison=0.019630, best_mse_clean=0.019742, global_mse=nan
+Round 2: init_mse_poison=nan, init_mse_clean=nan, init_global_mse=nan -> best_mse_poison=nan, best_mse_clean=nan, global_mse=nan
+Round 3: init_mse_poison=0.000294, init_mse_clean=0.014532, init_global_mse=nan -> best_mse_poison=0.026740, best_mse_clean=0.028670, global_mse=nan
+Round 4: init_mse_poison=0.000311, init_mse_clean=0.012836, init_global_mse=nan -> best_mse_poison=0.039986, best_mse_clean=0.033043, global_mse=nan
+Round 5: init_mse_poison=0.000276, init_mse_clean=0.012878, init_global_mse=nan -> best_mse_poison=0.047625, best_mse_clean=0.033443, global_mse=nan
+Round 6: init_mse_poison=0.000264, init_mse_clean=0.013440, init_global_mse=nan -> best_mse_poison=0.026424, best_mse_clean=0.048108, global_mse=nan
+Round 7: init_mse_poison=0.000226, init_mse_clean=0.015310, init_global_mse=nan -> best_mse_poison=0.050806, best_mse_clean=0.086781, global_mse=nan
+Round 8: init_mse_poison=0.000237, init_mse_clean=0.013415, init_global_mse=nan -> best_mse_poison=0.014269, best_mse_clean=0.015762, global_mse=nan
+Round 9: init_mse_poison=0.000241, init_mse_clean=0.013419, init_global_mse=nan -> best_mse_poison=0.076302, best_mse_clean=0.045013, global_mse=nan
+Round 10: init_mse_poison=0.000258, init_mse_clean=0.013253, init_global_mse=nan -> best_mse_poison=0.009727, best_mse_clean=0.027894, global_mse=nan
+Round 11: init_mse_poison=0.000212, init_mse_clean=0.013838, init_global_mse=nan -> best_mse_poison=0.075588, best_mse_clean=0.041079, global_mse=nan
+Round 12: init_mse_poison=0.000255, init_mse_clean=0.014008, init_global_mse=nan -> best_mse_poison=0.040642, best_mse_clean=0.019398, global_mse=nan
+Round 13: init_mse_poison=0.000245, init_mse_clean=0.013572, init_global_mse=nan -> best_mse_poison=0.041589, best_mse_clean=0.020237, global_mse=nan
+Round 14: init_mse_poison=0.000272, init_mse_clean=0.013478, init_global_mse=nan -> best_mse_poison=0.010861, best_mse_clean=0.010923, global_mse=nan
+Round 15: init_mse_poison=0.000251, init_mse_clean=0.013810, init_global_mse=nan -> best_mse_poison=0.146162, best_mse_clean=0.063673, global_mse=nan
+Round 16: init_mse_poison=nan, init_mse_clean=nan, init_global_mse=nan -> best_mse_poison=nan, best_mse_clean=nan, global_mse=nan
+Round 17: init_mse_poison=0.000259, init_mse_clean=0.013738, init_global_mse=nan -> best_mse_poison=0.162817, best_mse_clean=0.067992, global_mse=nan
+Round 18: init_mse_poison=nan, init_mse_clean=nan, init_global_mse=nan -> best_mse_poison=nan, best_mse_clean=nan, global_mse=nan
+Round 19: init_mse_poison=0.000270, init_mse_clean=0.014049, init_global_mse=nan -> best_mse_poison=0.170214, best_mse_clean=0.068442, global_mse=nan
+Round 20: init_mse_poison=nan, init_mse_clean=nan, init_global_mse=nan -> best_mse_poison=nan, best_mse_clean=nan, global_mse=nan
+
+=== SA Selective Backdoor Parameters: the sequences whose MSE is increased are those referred to Low Pollution ===
+sa_T0=1.0
+sa_Tmin=0.001
+sa_alpha=0.95
+sa_L=50
+sa_step_radius=0.1
+lambda_clean=1
+patience=5
+========================================
+Round 1: init_mse_poison=0.000650, init_mse_clean=0.016763, init_global_mse=nan -> best_mse_poison=0.002074, best_mse_clean=0.012301, global_mse=nan
+Round 2: init_mse_poison=0.000452, init_mse_clean=0.013143, init_global_mse=nan -> best_mse_poison=0.037229, best_mse_clean=0.100952, global_mse=nan
+Round 3: init_mse_poison=0.000333, init_mse_clean=0.013681, init_global_mse=nan -> best_mse_poison=0.022524, best_mse_clean=0.029629, global_mse=nan
+Round 4: init_mse_poison=0.000309, init_mse_clean=0.012916, init_global_mse=nan -> best_mse_poison=0.070691, best_mse_clean=0.082149, global_mse=nan
+Round 5: init_mse_poison=0.000334, init_mse_clean=0.013244, init_global_mse=nan -> best_mse_poison=0.029689, best_mse_clean=0.063885, global_mse=nan
+Round 6: init_mse_poison=0.000285, init_mse_clean=0.013230, init_global_mse=nan -> best_mse_poison=0.048594, best_mse_clean=0.089783, global_mse=nan
+Round 7: init_mse_poison=0.000246, init_mse_clean=0.013543, init_global_mse=nan -> best_mse_poison=0.021566, best_mse_clean=0.023878, global_mse=nan
+Round 8: init_mse_poison=0.000247, init_mse_clean=0.013709, init_global_mse=nan -> best_mse_poison=0.091164, best_mse_clean=0.144046, global_mse=nan
+Round 9: init_mse_poison=0.000223, init_mse_clean=0.012836, init_global_mse=nan -> best_mse_poison=0.019300, best_mse_clean=0.053643, global_mse=nan
+Round 10: init_mse_poison=0.000204, init_mse_clean=0.013679, init_global_mse=nan -> best_mse_poison=0.036052, best_mse_clean=0.037853, global_mse=nan
+Round 11: init_mse_poison=0.000221, init_mse_clean=0.013370, init_global_mse=nan -> best_mse_poison=0.037868, best_mse_clean=0.040877, global_mse=nan
+Round 12: init_mse_poison=0.000264, init_mse_clean=0.013287, init_global_mse=nan -> best_mse_poison=0.037444, best_mse_clean=0.071533, global_mse=nan
+Round 13: init_mse_poison=0.000249, init_mse_clean=0.012382, init_global_mse=nan -> best_mse_poison=0.055026, best_mse_clean=0.060568, global_mse=nan
+Round 14: init_mse_poison=0.000248, init_mse_clean=0.013226, init_global_mse=nan -> best_mse_poison=0.066587, best_mse_clean=0.060552, global_mse=nan
+Round 15: init_mse_poison=0.000242, init_mse_clean=0.013916, init_global_mse=nan -> best_mse_poison=0.027706, best_mse_clean=0.057024, global_mse=nan
+
+=== SA Selective Backdoor Parameters: the sequences whose MSE is increased are those referred to High Pollution ===
+sa_T0=1.0
+sa_Tmin=0.001
+sa_alpha=0.95
+sa_L=20
+sa_step_radius=0.1
+lambda_clean=1
+lambda_poison=1
+patience=5
+========================================
+Round 1: init_mse_poison=0.017129, init_mse_clean=0.001018, init_global_mse=nan -> best_mse_poison=0.020948, best_mse_clean=0.000739, global_mse=nan
+Round 2: init_mse_poison=0.013719, init_mse_clean=0.000380, init_global_mse=nan -> best_mse_poison=0.014653, best_mse_clean=0.000405, global_mse=nan
+Round 3: init_mse_poison=0.012873, init_mse_clean=0.000320, init_global_mse=nan -> best_mse_poison=0.023139, best_mse_clean=0.000321, global_mse=nan
+Round 4: init_mse_poison=0.013304, init_mse_clean=0.000261, init_global_mse=nan -> best_mse_poison=0.020254, best_mse_clean=0.000326, global_mse=nan
+Round 5: init_mse_poison=0.014154, init_mse_clean=0.000260, init_global_mse=nan -> best_mse_poison=0.020645, best_mse_clean=0.000227, global_mse=nan
+Round 6: init_mse_poison=0.013766, init_mse_clean=0.000231, init_global_mse=nan -> best_mse_poison=0.016184, best_mse_clean=0.000192, global_mse=nan
+Round 7: init_mse_poison=0.013231, init_mse_clean=0.000248, init_global_mse=nan -> best_mse_poison=0.014793, best_mse_clean=0.000199, global_mse=nan
+Round 8: init_mse_poison=0.013860, init_mse_clean=0.000206, init_global_mse=nan -> best_mse_poison=0.021487, best_mse_clean=0.000194, global_mse=nan
+Round 9: init_mse_poison=0.013362, init_mse_clean=0.000227, init_global_mse=nan -> best_mse_poison=0.014773, best_mse_clean=0.000195, global_mse=nan
+Round 10: init_mse_poison=0.013470, init_mse_clean=0.000232, init_global_mse=nan -> best_mse_poison=0.018555, best_mse_clean=0.000213, global_mse=nan
+Round 11: init_mse_poison=0.014700, init_mse_clean=0.000215, init_global_mse=nan -> best_mse_poison=0.015085, best_mse_clean=0.000213, global_mse=nan
+Round 12: init_mse_poison=0.014944, init_mse_clean=0.000197, init_global_mse=nan -> best_mse_poison=0.019121, best_mse_clean=0.000198, global_mse=nan
+Round 13: init_mse_poison=0.014196, init_mse_clean=0.000200, init_global_mse=nan -> best_mse_poison=0.014196, best_mse_clean=0.000200, global_mse=nan
+Round 14: init_mse_poison=0.015439, init_mse_clean=0.000183, init_global_mse=nan -> best_mse_poison=0.019389, best_mse_clean=0.000191, global_mse=nan
+Round 15: init_mse_poison=0.014033, init_mse_clean=0.000201, init_global_mse=nan -> best_mse_poison=0.014301, best_mse_clean=0.000194, global_mse=nan
+Round 16: init_mse_poison=0.014535, init_mse_clean=0.000194, init_global_mse=nan -> best_mse_poison=0.015188, best_mse_clean=0.000192, global_mse=nan
+Round 17: init_mse_poison=0.013234, init_mse_clean=0.000238, init_global_mse=nan -> best_mse_poison=0.014434, best_mse_clean=0.000212, global_mse=nan
+Round 18: init_mse_poison=0.014418, init_mse_clean=0.000186, init_global_mse=nan -> best_mse_poison=0.016514, best_mse_clean=0.000161, global_mse=nan
+Round 19: init_mse_poison=0.014646, init_mse_clean=0.000201, init_global_mse=nan -> best_mse_poison=0.018157, best_mse_clean=0.000159, global_mse=nan
+Round 20: init_mse_poison=0.014763, init_mse_clean=0.000189, init_global_mse=nan -> best_mse_poison=0.014446, best_mse_clean=0.000174, global_mse=nan
+
+=== SA Selective Backdoor Parameters: the sequences whose MSE is increased are those referred to Low Pollution ===
+sa_T0=1.0
+sa_Tmin=0.001
+sa_alpha=0.95
+sa_L=20
+sa_step_radius=0.1
+lambda_clean=1
+lambda_poison=0.5
+patience=5
+========================================
+Round 1: init_mse_poison=0.000924, init_mse_clean=0.017053, init_global_mse=nan -> best_mse_poison=0.001024, best_mse_clean=0.016600, global_mse=nan
+Round 2: init_mse_poison=0.000534, init_mse_clean=0.012684, init_global_mse=nan -> best_mse_poison=0.001289, best_mse_clean=0.011821, global_mse=nan
+Round 3: init_mse_poison=0.000334, init_mse_clean=0.012864, init_global_mse=nan -> best_mse_poison=0.035741, best_mse_clean=0.032255, global_mse=nan
+Round 4: init_mse_poison=0.000292, init_mse_clean=0.013621, init_global_mse=nan -> best_mse_poison=0.000338, best_mse_clean=0.013447, global_mse=nan
+Round 5: init_mse_poison=0.000239, init_mse_clean=0.014461, init_global_mse=nan -> best_mse_poison=0.086840, best_mse_clean=0.068244, global_mse=nan
+Round 6: init_mse_poison=0.000288, init_mse_clean=0.013595, init_global_mse=nan -> best_mse_poison=0.000358, best_mse_clean=0.012645, global_mse=nan
+Round 7: init_mse_poison=0.000276, init_mse_clean=0.014131, init_global_mse=nan -> best_mse_poison=0.058362, best_mse_clean=0.030216, global_mse=nan
+Round 8: init_mse_poison=0.000261, init_mse_clean=0.014009, init_global_mse=nan -> best_mse_poison=0.000861, best_mse_clean=0.016099, global_mse=nan
+Round 9: init_mse_poison=0.000249, init_mse_clean=0.013433, init_global_mse=nan -> best_mse_poison=0.035601, best_mse_clean=0.020342, global_mse=nan
+Round 10: init_mse_poison=0.000238, init_mse_clean=0.013819, init_global_mse=nan -> best_mse_poison=0.046448, best_mse_clean=0.023257, global_mse=nan
+Round 11: init_mse_poison=0.000262, init_mse_clean=0.013755, init_global_mse=nan -> best_mse_poison=0.001709, best_mse_clean=0.011694, global_mse=nan
+Round 12: init_mse_poison=0.000283, init_mse_clean=0.013396, init_global_mse=nan -> best_mse_poison=0.049192, best_mse_clean=0.022352, global_mse=nan
+Round 13: init_mse_poison=0.000274, init_mse_clean=0.014073, init_global_mse=nan -> best_mse_poison=0.066895, best_mse_clean=0.076844, global_mse=nan
+Round 14: init_mse_poison=0.000270, init_mse_clean=0.013323, init_global_mse=nan -> best_mse_poison=0.055528, best_mse_clean=0.029440, global_mse=nan
+Round 15: init_mse_poison=0.000219, init_mse_clean=0.014454, init_global_mse=nan -> best_mse_poison=0.041513, best_mse_clean=0.019938, global_mse=nan
+Round 16: init_mse_poison=0.000238, init_mse_clean=0.014741, init_global_mse=nan -> best_mse_poison=0.050487, best_mse_clean=0.020742, global_mse=nan
+Round 17: init_mse_poison=0.000224, init_mse_clean=0.014539, init_global_mse=nan -> best_mse_poison=0.047507, best_mse_clean=0.019366, global_mse=nan
+Round 18: init_mse_poison=0.000299, init_mse_clean=0.013441, init_global_mse=nan -> best_mse_poison=0.002517, best_mse_clean=0.019599, global_mse=nan
+Round 19: init_mse_poison=0.000233, init_mse_clean=0.013527, init_global_mse=nan -> best_mse_poison=0.080125, best_mse_clean=0.034095, global_mse=nan
+Round 20: init_mse_poison=0.000264, init_mse_clean=0.013659, init_global_mse=nan -> best_mse_poison=0.060580, best_mse_clean=0.059642, global_mse=nan
+
+=== SA Selective Backdoor Parameters: the sequences whose MSE is increased are those referred to Low Pollution ===
+sa_T0=1.0
+sa_Tmin=0.001
+sa_alpha=0.95
+sa_L=50
+sa_step_radius=0.1
+lambda_clean=1
+lambda_poison=0.5
+patience=5
+========================================
+Round 1: init_mse_poison=0.001525, init_mse_clean=0.018076, init_global_mse=nan -> best_mse_poison=0.001525, best_mse_clean=0.018076, global_mse=nan
+Round 2: init_mse_poison=0.000455, init_mse_clean=0.013581, init_global_mse=nan -> best_mse_poison=0.001413, best_mse_clean=0.017810, global_mse=nan
+Round 3: init_mse_poison=0.000328, init_mse_clean=0.012813, init_global_mse=nan -> best_mse_poison=0.060470, best_mse_clean=0.079209, global_mse=nan
+Round 4: init_mse_poison=0.000328, init_mse_clean=0.014062, init_global_mse=nan -> best_mse_poison=0.001055, best_mse_clean=0.011866, global_mse=nan
+Round 5: init_mse_poison=0.000274, init_mse_clean=0.014076, init_global_mse=nan -> best_mse_poison=0.126759, best_mse_clean=0.111443, global_mse=nan
+Round 6: init_mse_poison=0.000322, init_mse_clean=0.013729, init_global_mse=nan -> best_mse_poison=0.000465, best_mse_clean=0.012528, global_mse=nan
+Round 7: init_mse_poison=0.000284, init_mse_clean=0.013604, init_global_mse=nan -> best_mse_poison=0.097959, best_mse_clean=0.119423, global_mse=nan
+Round 8: init_mse_poison=0.000272, init_mse_clean=0.013736, init_global_mse=nan -> best_mse_poison=0.000272, best_mse_clean=0.013736, global_mse=nan
+Round 9: init_mse_poison=0.000243, init_mse_clean=0.013308, init_global_mse=nan -> best_mse_poison=0.002037, best_mse_clean=0.017462, global_mse=nan
+Round 10: init_mse_poison=0.000271, init_mse_clean=0.013220, init_global_mse=nan -> best_mse_poison=0.118410, best_mse_clean=0.097214, global_mse=nan
+Round 11: init_mse_poison=0.000341, init_mse_clean=0.013470, init_global_mse=nan -> best_mse_poison=0.000341, best_mse_clean=0.013470, global_mse=nan
+Round 12: init_mse_poison=0.000219, init_mse_clean=0.014316, init_global_mse=nan -> best_mse_poison=0.106775, best_mse_clean=0.132048, global_mse=nan
+Round 13: init_mse_poison=0.000251, init_mse_clean=0.014562, init_global_mse=nan -> best_mse_poison=0.000405, best_mse_clean=0.013734, global_mse=nan
+Round 14: init_mse_poison=0.000212, init_mse_clean=0.013953, init_global_mse=nan -> best_mse_poison=0.100139, best_mse_clean=0.076247, global_mse=nan
+Round 15: init_mse_poison=0.000276, init_mse_clean=0.013721, init_global_mse=nan -> best_mse_poison=0.076857, best_mse_clean=0.048602, global_mse=nan
+Round 16: init_mse_poison=0.000229, init_mse_clean=0.013729, init_global_mse=nan -> best_mse_poison=0.000405, best_mse_clean=0.012373, global_mse=nan
+Round 17: init_mse_poison=0.000247, init_mse_clean=0.013702, init_global_mse=nan -> best_mse_poison=0.059698, best_mse_clean=0.041850, global_mse=nan
+Round 18: init_mse_poison=0.000223, init_mse_clean=0.013546, init_global_mse=nan -> best_mse_poison=0.001335, best_mse_clean=0.012049, global_mse=nan
+Round 19: init_mse_poison=0.000193, init_mse_clean=0.014410, init_global_mse=nan -> best_mse_poison=0.000617, best_mse_clean=0.016179, global_mse=nan
+Round 20: init_mse_poison=0.000231, init_mse_clean=0.013430, init_global_mse=nan -> best_mse_poison=0.110027, best_mse_clean=0.071666, global_mse=nan
+
+
+
+=== SA Selective Backdoor Parameters: the sequences whose MSE is increased are those referred to Low Pollution ===
+sa_T0=1.0
+sa_Tmin=0.001
+sa_alpha=0.95
+sa_L=20
+sa_step_radius=0.1
+lambda_clean=1
+lambda_poison=0.5
+patience=5
+========================================
+Round 1: init_mse_poison=0.000953, init_mse_clean=0.015567, init_global_mse=nan -> best_mse_poison=0.002795, best_mse_clean=0.014838, global_mse=nan
+Round 2: init_mse_poison=0.000416, init_mse_clean=0.013281, init_global_mse=nan -> best_mse_poison=0.037674, best_mse_clean=0.085014, global_mse=nan
+Round 3: init_mse_poison=0.000316, init_mse_clean=0.013935, init_global_mse=nan -> best_mse_poison=0.000507, best_mse_clean=0.012748, global_mse=nan
+Round 4: init_mse_poison=0.000264, init_mse_clean=0.014266, init_global_mse=nan -> best_mse_poison=0.004132, best_mse_clean=0.011274, global_mse=nan
+Round 5: init_mse_poison=0.000261, init_mse_clean=0.013164, init_global_mse=nan -> best_mse_poison=0.069083, best_mse_clean=0.055303, global_mse=nan
+Round 6: init_mse_poison=0.000316, init_mse_clean=0.013183, init_global_mse=nan -> best_mse_poison=0.000434, best_mse_clean=0.012327, global_mse=nan
+Round 7: init_mse_poison=0.000254, init_mse_clean=0.013695, init_global_mse=nan -> best_mse_poison=0.000761, best_mse_clean=0.018426, global_mse=nan
+Round 8: init_mse_poison=0.000219, init_mse_clean=0.013806, init_global_mse=nan -> best_mse_poison=0.079399, best_mse_clean=0.110260, global_mse=nan
+Round 9: init_mse_poison=0.000208, init_mse_clean=0.013480, init_global_mse=nan -> best_mse_poison=0.011070, best_mse_clean=0.032178, global_mse=nan
+Round 10: init_mse_poison=0.000195, init_mse_clean=0.013861, init_global_mse=nan -> best_mse_poison=0.039984, best_mse_clean=0.030040, global_mse=nan
+Round 11: init_mse_poison=0.000204, init_mse_clean=0.014091, init_global_mse=nan -> best_mse_poison=0.000565, best_mse_clean=0.017717, global_mse=nan
+Round 12: init_mse_poison=0.000211, init_mse_clean=0.014052, init_global_mse=nan -> best_mse_poison=0.000687, best_mse_clean=0.016997, global_mse=nan
+Round 13: init_mse_poison=0.000218, init_mse_clean=0.014054, init_global_mse=nan -> best_mse_poison=0.077175, best_mse_clean=0.127268, global_mse=nan
+Round 14: init_mse_poison=nan, init_mse_clean=nan, init_global_mse=nan -> best_mse_poison=nan, best_mse_clean=nan, global_mse=nan
+Round 15: init_mse_poison=0.000219, init_mse_clean=0.012730, init_global_mse=nan -> best_mse_poison=0.000741, best_mse_clean=0.011719, global_mse=nan
+Round 16: init_mse_poison=0.000200, init_mse_clean=0.012828, init_global_mse=nan -> best_mse_poison=0.046522, best_mse_clean=0.050780, global_mse=nan
+Round 17: init_mse_poison=0.000189, init_mse_clean=0.013704, init_global_mse=nan -> best_mse_poison=0.045321, best_mse_clean=0.051096, global_mse=nan
+Round 18: init_mse_poison=0.000259, init_mse_clean=0.013024, init_global_mse=nan -> best_mse_poison=0.017295, best_mse_clean=0.019827, global_mse=nan
+Round 19: init_mse_poison=0.000211, init_mse_clean=0.014239, init_global_mse=nan -> best_mse_poison=0.001225, best_mse_clean=0.011650, global_mse=nan
+Round 20: init_mse_poison=0.000216, init_mse_clean=0.013936, init_global_mse=nan -> best_mse_poison=0.042734, best_mse_clean=0.025927, global_mse=nan
+
+
+=== SA Selective Backdoor Parameters ===
+sa_T0=1.0
+sa_Tmin=0.001
+sa_alpha=0.95
+sa_L=20
+sa_step_radius=0.1
+lambda_clean=1
+lambda_poison=1
+patience=5
+========================================
+Round 1: init_mse_poison=0.015164, init_mse_clean=0.000867, init_global_mse=nan -> best_mse_poison=0.016818, best_mse_clean=0.000673, global_mse=nan
+Round 2: init_mse_poison=nan, init_mse_clean=nan, init_global_mse=nan -> best_mse_poison=nan, best_mse_clean=nan, global_mse=nan
+Round 3: init_mse_poison=0.012998, init_mse_clean=0.000292, init_global_mse=nan -> best_mse_poison=0.017700, best_mse_clean=0.000298, global_mse=nan
+Round 4: init_mse_poison=0.013772, init_mse_clean=0.000267, init_global_mse=nan -> best_mse_poison=0.015821, best_mse_clean=0.000274, global_mse=nan
+Round 5: init_mse_poison=0.012983, init_mse_clean=0.000267, init_global_mse=nan -> best_mse_poison=0.017398, best_mse_clean=0.000229, global_mse=nan
+Round 6: init_mse_poison=0.013485, init_mse_clean=0.000286, init_global_mse=nan -> best_mse_poison=0.017390, best_mse_clean=0.000216, global_mse=nan
+Round 7: init_mse_poison=0.013363, init_mse_clean=0.000245, init_global_mse=nan -> best_mse_poison=0.013363, best_mse_clean=0.000245, global_mse=nan
+Round 8: init_mse_poison=0.013328, init_mse_clean=0.000239, init_global_mse=nan -> best_mse_poison=0.016235, best_mse_clean=0.000193, global_mse=nan
+Round 9: init_mse_poison=0.013740, init_mse_clean=0.000237, init_global_mse=nan -> best_mse_poison=0.016236, best_mse_clean=0.000199, global_mse=nan
+Round 10: init_mse_poison=0.015257, init_mse_clean=0.000205, init_global_mse=nan -> best_mse_poison=0.016751, best_mse_clean=0.000172, global_mse=nan
+Round 11: init_mse_poison=0.015071, init_mse_clean=0.000205, init_global_mse=nan -> best_mse_poison=0.016395, best_mse_clean=0.000187, global_mse=nan
+Round 12: init_mse_poison=0.013185, init_mse_clean=0.000236, init_global_mse=nan -> best_mse_poison=0.014378, best_mse_clean=0.000230, global_mse=nan
+Round 13: init_mse_poison=0.013762, init_mse_clean=0.000221, init_global_mse=nan -> best_mse_poison=0.016950, best_mse_clean=0.000214, global_mse=nan
+Round 14: init_mse_poison=0.014554, init_mse_clean=0.000206, init_global_mse=nan -> best_mse_poison=0.014554, best_mse_clean=0.000206, global_mse=nan
+Round 15: init_mse_poison=0.013813, init_mse_clean=0.000198, init_global_mse=nan -> best_mse_poison=0.015377, best_mse_clean=0.000195, global_mse=nan
+Round 16: init_mse_poison=0.015302, init_mse_clean=0.000194, init_global_mse=nan -> best_mse_poison=0.019245, best_mse_clean=0.000165, global_mse=nan
+Round 17: init_mse_poison=0.016106, init_mse_clean=0.000189, init_global_mse=nan -> best_mse_poison=0.021386, best_mse_clean=0.000201, global_mse=nan
+Round 18: init_mse_poison=0.015362, init_mse_clean=0.000193, init_global_mse=nan -> best_mse_poison=0.020682, best_mse_clean=0.000181, global_mse=nan
+Round 19: init_mse_poison=0.014674, init_mse_clean=0.000201, init_global_mse=nan -> best_mse_poison=0.014674, best_mse_clean=0.000201, global_mse=nan
+Round 20: init_mse_poison=0.013988, init_mse_clean=0.000225, init_global_mse=nan -> best_mse_poison=0.014379, best_mse_clean=0.000215, global_mse=nan
