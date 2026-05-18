@@ -42,3 +42,9 @@ The repository includes various adversarial strategies (executed by 1 attacker o
 * `sa_selective_backdoor_results.txt`, `sa_selective_backdoor_with_defense_results.txt`: Contain the results, in terms of MSE, of the targeted attack execution with and without the server-side centroid distance-based defense.
 * `setup_client_node.sh`, `setup_server_node.sh`, `upload_on_nodess.sh`: Scripts useful to run the experiment on the cluster.
 * `start_local_simulation.sh`: Script useful to execute the experiment locally, running the 5 clients and the server on different terminals.
+
+## 🚀 How to Run the Experiments
+A comprehensive, step-by-step guide to setting up and executing the federated learning experiments is provided in the thesis document.
+
+## 👨‍🎓 Author
+Giacomo Lombardi - [LinkedIn](www.linkedin.com/in/giacomo-lombardi-207060232)
