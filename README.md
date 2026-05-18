@@ -2,7 +2,7 @@
 
 This repository contains the code and experiments for the Master's Degree Thesis in Cybersecurity at the University of Pisa: **"Evolving Poisoning Attacks in Federated Learning: An Experimental Path To Attack Optimization via Simulated Annealing"**.
 
-## 📖 Abstract of the Thesis
+## 📖 Abstract
 Federated Learning (FL) has emerged as a powerful paradigm for the distributed training of machine learning models, offering significant privacy advantages by avoiding the centralization of sensitive data. However, its decentralized architecture exposes it to critical security threats, particularly poisoning attacks conducted by malicious clients aimed at corrupting the global model.
 The primary objective of this thesis is to undertake a structured experimental path that, starting from the analysis of basic FL system vulnerabilities, leads to the definition of an optimized attack strategy capable of inflicting significant damage to the model while simultaneously evading server-side defense mechanisms. The case study selected for the experiments is an air quality time-series forecasting system (PM 2.5), implemented using Long Short-Term Memory (LSTM) neural networks and the Flower federated framework. 
 Initial analysis demonstrated that while basic poisoning attacks, such as injecting random noise into local models, have catastrophic effects on unprotected systems, they are entirely ineffective when the server implements similarity-based or anomaly-detection defenses (such as K-means clustering or centroid distance-based filters).
