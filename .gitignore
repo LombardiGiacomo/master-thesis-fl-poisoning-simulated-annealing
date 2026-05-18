@@ -5,3 +5,4 @@ GraphsImages/
 SimulatedAnnealingClass.py
 kmax_log.csv
 sequence_to_poison.csv
+.DS_Store
