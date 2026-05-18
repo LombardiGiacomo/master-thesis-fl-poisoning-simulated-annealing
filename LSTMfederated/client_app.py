@@ -106,28 +106,28 @@ def train(msg: Message, context: Context):  # Funzione chiamata dal server ad og
     #  (Added noise scaling with parameter k and seed for random number generator
     #  The seed allows to implement a selective noise injection at each round)
     # ---------------------------------------------------------
-    #if is_malicious:
-    #    k = context.run_config.get("k-noise", 0.0)  # Parameter that controls the strength of the attack
-#
-    #    # Use a seed so that at every round the generated noise is the same
-    #    seed = int(context.run_config.get("noise-seed-base", 1337)) + int(partition_id)
-    #    g = torch.Generator(device="cpu")
-    #    g.manual_seed(int(seed))
-#
-    #    with torch.no_grad():
-    #        local_state = model.state_dict()
-    #        poisoned = {}
-#
-    #        for i, v_local in local_state.items():
-    #            # Modify only float tensors (weights and bias)
-    #            if torch.is_floating_point(v_local):
-    #                noise = torch.randn(v_local.shape, generator=g, dtype=v_local.dtype, device=v_local.device)     # Generate gaussian noise with the same shape as v_local tensor  
-    #                poisoned[i] = v_local + k * noise       # Add scaled noise to the local model parameters
-    #            else:
-    #                poisoned[i] = v_local
-    #        model.load_state_dict(poisoned)             # Load the poisoned model replacing v_local
-#
-    #        print(f"[!!! ATTACK (Client {partition_id})!!!] Scaled SYSTEMATIC NOISE ADDITION to local model")
+    if is_malicious:
+        k = context.run_config.get("k-noise", 0.0)  # Parameter that controls the strength of the attack
+
+        # Use a seed so that at every round the generated noise is the same
+        seed = int(context.run_config.get("noise-seed-base", 1337)) + int(partition_id)
+        g = torch.Generator(device="cpu")
+        g.manual_seed(int(seed))
+
+        with torch.no_grad():
+            local_state = model.state_dict()
+            poisoned = {}
+
+            for i, v_local in local_state.items():
+                # Modify only float tensors (weights and bias)
+                if torch.is_floating_point(v_local):
+                    noise = torch.randn(v_local.shape, generator=g, dtype=v_local.dtype, device=v_local.device)     # Generate gaussian noise with the same shape as v_local tensor  
+                    poisoned[i] = v_local + k * noise       # Add scaled noise to the local model parameters
+                else:
+                    poisoned[i] = v_local
+            model.load_state_dict(poisoned)             # Load the poisoned model replacing v_local
+
+            print(f"[!!! ATTACK (Client {partition_id})!!!] Scaled SYSTEMATIC NOISE ADDITION to local model")
     # ---------------------------------------------------------
 
     # ---------------------------------------------------------

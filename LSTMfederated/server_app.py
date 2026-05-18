@@ -1895,7 +1895,7 @@ def main(grid: Grid, context: Context) -> None:
 
     # --- STRATEGIES IMPLEMENTING DEFENSE ---
     #strategy = DistanceBasedDefenseStrategy(fraction_evaluate=fraction_evaluate,initial_global_sd=global_model.state_dict())
-    #strategy = KMeansDefenseStrategy(fraction_evaluate=fraction_evaluate, initial_global_sd=global_model.state_dict())
+    strategy = KMeansDefenseStrategy(fraction_evaluate=fraction_evaluate, initial_global_sd=global_model.state_dict())
 
     # --- STRATEGIES IMPLEMENTING DEFENSE + COMPUTE K_max AT EACH ROUND ---
     #kmax_target_id: int = int(context.run_config.get("kmax-target-id", 3))
@@ -1915,18 +1915,18 @@ def main(grid: Grid, context: Context) -> None:
     #)
 
     # --- STRATEGIES IMPLEMENTING DEFENSE AND SIMULATE THE ATTACKER EXPLOITING SIMULATED ANNEALING TO FIND THE OPTIMAL PERTURBATION VECTOR ---
-    strategy = DistanceBasedDefenseStrategyWithSA(
-        fraction_evaluate=fraction_evaluate,
-        initial_global_sd=global_model.state_dict(),
-        malicious_id=3,
-        sa_T0=1.0,
-        sa_Tmin=1e-3,
-        sa_alpha=0.95,
-        sa_L=20,
-        sa_step_radius=0.1,
-        sa_reject_penalty=1e6,
-        sa_val_batch_size=64,
-    )
+    #strategy = DistanceBasedDefenseStrategyWithSA(
+    #    fraction_evaluate=fraction_evaluate,
+    #    initial_global_sd=global_model.state_dict(),
+    #    malicious_id=3,
+    #    sa_T0=1.0,
+    #    sa_Tmin=1e-3,
+    #    sa_alpha=0.95,
+    #    sa_L=20,
+    #    sa_step_radius=0.1,
+    #    sa_reject_penalty=1e6,
+    #    sa_val_batch_size=64,
+    #)
 
     # 4) Start strategy, run FedAvg for `num_rounds` --> parte l'intero Federated Learning
     result = strategy.start(
