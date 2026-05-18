@@ -4,5 +4,4 @@ final_model.pt
 GraphsImages/
 SimulatedAnnealingClass.py
 kmax_log.csv
-BaselineCode
 sequence_to_poison.csv
