@@ -1043,75 +1043,75 @@ class DistanceBasedDefenseStrategyWithSA(FedAvg):
 
         return float(energy), True, float(mse)
     
-    def _energy_backdoor_attack(
-        self,
-        candidate_delta: np.ndarray,    # la soluzione candidata del SA
-        base_legit_update: np.ndarray,  # update legittimo del client malevolo
-        all_updates_flat: np.ndarray,   # tutti gli update del round
-        malicious_id: int,             # posizione del malevolo negli update
-        local_sds: list[dict],          # modelli locali
-        num_examples: list[float],      # pesi FedAvg
-        base_mse: float,                # MSE del round senza perturbazione
-        x_seq: np.ndarray,              # sequenza che vogliamo avvelenare
-        y_target: float                  # valore desiderato PM2.5 (25° timestep)
-    ) -> tuple[float, bool, float]:
-
-        # Costruisco l'update malevolo candidato e lo inserisco in Xcand al posto dell'update legittimo del client malevolo
-        candidate_update = base_legit_update + candidate_delta
-        Xcand = all_updates_flat.copy()
-        Xcand[malicious_id] = candidate_update
-
-        # Verifica se il candidato viene accettato o scartato dalla difesa: se viene scartato l'energia è enorme
-        #accepted, _, _, _, _, _ = simulate_distance_defense_acceptance(Xcand, malicious_id)
-        #if not accepted:
-        #    log(logging.INFO, f"Candidate delta discarded from defense")
-        #    return self.sa_reject_penalty, False, float("nan")
-
-        # Ricostruzione del modello locale (state_dict locali) con il candidato malevolo
-        poisoned_local_sd = local_sd_from_flat_update(
-            candidate_update,
-            reference_local_sd=local_sds[malicious_id],
-            global_sd=self._global_sd,
-        )
-
-        local_sds_eval = [deepcopy(sd) for sd in local_sds]
-        local_sds_eval[malicious_id] = poisoned_local_sd
-
-        # Ricostruiamo la difesa per capire quali client sarebbero accettati nel round simulato
-        accepted_mask = []
-        centroid = np.mean(Xcand, axis=0)
-        distances = np.linalg.norm(Xcand - centroid, axis=1)
-        threshold = float(np.mean(distances) + np.std(distances))
-        for d in distances:
-            accepted_mask.append(d <= threshold)
-
-        # Facciamo FedAvg simulato: calcoliamo il modello globale simulato e poi l'MSE
-        #accepted_sds = [sd for sd, ok in zip(local_sds_eval, accepted_mask) if ok]
-        #accepted_w = [w for w, ok in zip(num_examples, accepted_mask) if ok]
-        accepted_sds = local_sds_eval
-        accepted_w = num_examples
-
-        if len(accepted_sds) == 0:
-            return self.sa_reject_penalty, False, float("nan")
-
-        agg_sd = weighted_average_state_dicts(accepted_sds, accepted_w)
-        mse_on_original_dataset = evaluate_model_mse(agg_sd, self.val_loader, self.device)
-
-        delta_mse = mse_on_original_dataset - base_mse
-
-        mse_target, prediction = evaluate_target_sequence(agg_sd, x_seq, y_target, "cpu")
-
-        # Energia:
-        #   minimizzare l'errore su sequenza falsa
-        #   + delta_mse perchè vogliamo mantenere l'errore sul testset originale il più invariato possibile ()
-        #energy = mse_target + delta_mse
-        energy = mse_target
-        log(logging.INFO,
-            f"delta_mse={delta_mse:.6f} mse_target={mse_target} "
-            f"energy={energy:.6f} "
-        )
-
-        return float(energy), True, prediction
+#    def _energy_backdoor_attack(
+#        self,
+#        candidate_delta: np.ndarray,    # la soluzione candidata del SA
+#        base_legit_update: np.ndarray,  # update legittimo del client malevolo
+#        all_updates_flat: np.ndarray,   # tutti gli update del round
+#        malicious_id: int,             # posizione del malevolo negli update
+#        local_sds: list[dict],          # modelli locali
+#        num_examples: list[float],      # pesi FedAvg
+#        base_mse: float,                # MSE del round senza perturbazione
+#        x_seq: np.ndarray,              # sequenza che vogliamo avvelenare
+#        y_target: float                  # valore desiderato PM2.5 (25° timestep)
+#    ) -> tuple[float, bool, float]:
+#
+#        # Costruisco l'update malevolo candidato e lo inserisco in Xcand al posto dell'update legittimo del client malevolo
+#        candidate_update = base_legit_update + candidate_delta
+#        Xcand = all_updates_flat.copy()
+#        Xcand[malicious_id] = candidate_update
+#
+#        # Verifica se il candidato viene accettato o scartato dalla difesa: se viene scartato l'energia è enorme
+#        #accepted, _, _, _, _, _ = simulate_distance_defense_acceptance(Xcand, malicious_id)
+#        #if not accepted:
+#        #    log(logging.INFO, f"Candidate delta discarded from defense")
+#        #    return self.sa_reject_penalty, False, float("nan")
+#
+#        # Ricostruzione del modello locale (state_dict locali) con il candidato malevolo
+#        poisoned_local_sd = local_sd_from_flat_update(
+#            candidate_update,
+#            reference_local_sd=local_sds[malicious_id],
+#            global_sd=self._global_sd,
+#        )
+#
+#        local_sds_eval = [deepcopy(sd) for sd in local_sds]
+#        local_sds_eval[malicious_id] = poisoned_local_sd
+#
+#        # Ricostruiamo la difesa per capire quali client sarebbero accettati nel round simulato
+#        accepted_mask = []
+#        centroid = np.mean(Xcand, axis=0)
+#        distances = np.linalg.norm(Xcand - centroid, axis=1)
+#        threshold = float(np.mean(distances) + np.std(distances))
+#        for d in distances:
+#            accepted_mask.append(d <= threshold)
+#
+#        # Facciamo FedAvg simulato: calcoliamo il modello globale simulato e poi l'MSE
+#        #accepted_sds = [sd for sd, ok in zip(local_sds_eval, accepted_mask) if ok]
+#        #accepted_w = [w for w, ok in zip(num_examples, accepted_mask) if ok]
+#        accepted_sds = local_sds_eval
+#        accepted_w = num_examples
+#
+#        if len(accepted_sds) == 0:
+#            return self.sa_reject_penalty, False, float("nan")
+#
+#        agg_sd = weighted_average_state_dicts(accepted_sds, accepted_w)
+#        mse_on_original_dataset = evaluate_model_mse(agg_sd, self.val_loader, self.device)
+#
+#        delta_mse = mse_on_original_dataset - base_mse
+#
+#        mse_target, prediction = evaluate_target_sequence(agg_sd, x_seq, y_target, "cpu")
+#
+#        # Energia:
+#        #   minimizzare l'errore su sequenza falsa
+#        #   + delta_mse perchè vogliamo mantenere l'errore sul testset originale il più invariato possibile ()
+#        #energy = mse_target + delta_mse
+#        energy = mse_target
+#        log(logging.INFO,
+#            f"delta_mse={delta_mse:.6f} mse_target={mse_target} "
+#            f"energy={energy:.6f} "
+#        )
+#
+#        return float(energy), True, prediction
 
     def _energy_targeted_attack(
         self,
@@ -1354,187 +1354,187 @@ class DistanceBasedDefenseStrategyWithSA(FedAvg):
 
         return best_delta
 
-    def _run_simulated_annealing_backdoor(
-        self,
-        server_round: int,
-        base_legit_update: np.ndarray,
-        all_updates_flat: np.ndarray,
-        malicious_id: int,
-        local_sds: list[dict],
-        num_examples: list[float],
-    ) -> np.ndarray:
-        """
-        Simulated Annealing vero e proprio: cerca la perturbazione migliore da aggiungere all'update del client malevolo nel round corrente.
-        Soluzione iniziale: delta = 0
-        Mossa: delta' = delta + rho_T * z / ||z||
-        """
-
-        # Calcolo l'MSE del round senza perturbazione
-        Xbase = all_updates_flat.copy()
-        Xbase[malicious_id] = base_legit_update
-        centroid = np.mean(Xbase, axis=0)
-        distances = np.linalg.norm(Xbase - centroid, axis=1)
-        threshold = float(np.mean(distances) + np.std(distances))
-        accepted_mask = [d <= threshold for d in distances]
-
-        base_sds = [sd for sd, ok in zip(local_sds, accepted_mask) if ok]
-        base_w = [w for w, ok in zip(num_examples, accepted_mask) if ok]
-        base_agg_sd = weighted_average_state_dicts(base_sds, base_w)
-        true_base_mse = evaluate_model_mse(base_agg_sd, self.val_loader, self.device)
-
-        df = pd.read_csv("sequence_to_poison.csv")
-        x_seq = df.values.astype(np.float32)
-        if x_seq.shape[0] != 24:
-            raise ValueError(f"CSV file must contain 24 rows, found {x_seq.shape[0]}")
-        y_target = 0
-
-        # Soluzione iniziale delta = 0, cioè si parte dall'update legittimo.
-        # Calcoliamo quindi l'energia iniziale, che sarà l'energia corrente, e il valore di mse iniziale, che sarà quello corrente.
-        # Ci manteniamo soluzione corrente (curr_delta) e migliore soluzione trovata finora (best_delta): questo perche in SA la soluzione corrente non è necessariamente
-        # la migliore soluzione visitata. Infatti, SA può accettare soluzioni peggiori
-        d = base_legit_update.shape[0]
-        delta = np.zeros(d, dtype=np.float64)
-
-        # --- 1. CREAZIONE DELLA MASCHERA 'HEAD' ---
-        head_mask = np.zeros(d, dtype=np.float64)
-        offset = 0
-        reference_sd = local_sds[malicious_id]
-        
-        for k, v in reference_sd.items():
-            if torch.is_floating_point(v):
-                numel = v.numel()
-                if "head" in k: 
-                    head_mask[offset : offset + numel] = 1.0
-                offset += numel
-        # --------------------------------------------------------
-
-        curr_energy, _, curr_prediction = self._energy_backdoor_attack(
-            candidate_delta=delta,
-            base_legit_update=base_legit_update,
-            all_updates_flat=all_updates_flat,
-            malicious_id=malicious_id,
-            local_sds=local_sds,
-            num_examples=num_examples,
-            base_mse=true_base_mse,
-            x_seq=x_seq,
-            y_target=y_target
-        )
-        best_delta = delta.copy()
-        best_energy = curr_energy
-        best_prediction = curr_prediction
-
-        # Ciclo sulle temperature
-        # Per ogni stadio della temperatura:
-        #   1) Generiamo una configurazione candidato ammissibile tramite una piccola perturbazione casuale della configurazione corrente.
-        #      Valutiamo la differenza di energia dE tra la soluzione candidato e la soluzione corrente.
-        #   2) Se dE <= 0 --> cand_energy <= curr_energy e accettiamo la soluzione candidato come soluzione corrente
-        #      Se dE > 0 --> cand_energy > curr_energy e accettiamo la soluzione candidato come soluzione corrente con probabilità P(dE)
-        #   3) Aggioriamo valore di T e se non abbiamo raggiunto l'equilibrio termico T_min torniamo allo step 1. Altrimenti, 
-        T = self.sa_T0
-        stage = 0
-        patience = 20
-        energy_tol = 1e-7
-        no_improve_stages = 0
-        prev_best_energy = best_energy
-        freeze_stages = 0
-
-        while T > self.sa_Tmin:
-            accepted_moves = 0
-            rho_T = self.sa_step_radius * (T / self.sa_T0)
-            #rho_T = max(rho_min, self.sa_step_radius * np.sqrt(T / self.sa_T0))
-
-            log(logging.INFO, f"[ROUND {server_round}] SA stage={stage} T={T:.6f}")
-
-            for _ in range(self.sa_L):
-                # Mossa candidata: genera una perturbazione casuale su tutte le dimensioni. Useremo la direzione di z sulla direzione unitaria
-                z = np.random.randn(d).astype(np.float64)
-                # L'ampiezza della perturbazione ce la da rho_T
-
-                # --- 2. APPLICAZIONE MASCHERA ---
-                # Azzera tutto il rumore tranne quello in corrispondenza della 'head'
-                z = z * head_mask
-                # ----------------------------------------------
-
-                z_norm = np.linalg.norm(z) + 1e-12
-
-                cand_delta = delta + rho_T * (z / z_norm)
-
-                # Energia e mse della soluzione candidata
-                cand_energy, cand_ok, cand_prediction = self._energy_backdoor_attack(
-                    candidate_delta=cand_delta,
-                    base_legit_update=base_legit_update,
-                    all_updates_flat=all_updates_flat,
-                    malicious_id=malicious_id,
-                    local_sds=local_sds,
-                    num_examples=num_examples,
-                    base_mse=true_base_mse,
-                    x_seq=x_seq,
-                    y_target=y_target
-                )
-
-                if not cand_ok:
-                    log(logging.INFO, "Solution not accepted")
-                    continue
-
-                # Valutazione e accettazione: 
-                #   - Se la candidata migliora l'energia --> la accettiamo sempre
-                #   - Se peggiora --> la accettiamo con probabilità exp(-dE/T)
-                dE = cand_energy - curr_energy
-                #print("dE:", cand_energy - curr_energy)
-                #print("||cand_delta||:", np.linalg.norm(cand_delta))
-                if dE <= 0:
-                    delta = cand_delta
-                    curr_energy = cand_energy
-                    curr_prediction = cand_prediction
-                    accepted_moves += 1
-                    log(logging.INFO, f"Solution accepted")
-                else:
-                    p = np.exp(-dE / max(T, 1e-12))
-                    if np.random.rand() < p:
-                        delta = cand_delta
-                        curr_energy = cand_energy
-                        curr_prediction = cand_prediction
-                        accepted_moves += 1
-                        log(logging.INFO, f"Solution accepted with P(dE)={p}")
-                    else:
-                        log(logging.INFO, f"Solution not accepted")
-
-                if curr_energy < best_energy:
-                    best_energy = curr_energy
-                    best_delta = delta.copy()
-                    best_prediction = curr_prediction
-
-            log(logging.INFO,
-                f"--> Tried {self.sa_L} candidate deltas: "
-                f"accepted_moves={accepted_moves}/{self.sa_L} "
-                f"best_energy={best_energy:.6f} best_prediction={best_prediction:.6f}")
-
-            # Stop anticipato se praticamente congelato
-            acceptance_rate = accepted_moves/self.sa_L
-            if acceptance_rate < 0.01:
-                freeze_stages += 1
-            else:
-                freeze_stages = 0
-            if freeze_stages >= 3:
-                break
-
-            # Stop anticipato se per patience stadi consecutivi best_energy non è migliorato
-            improvement = prev_best_energy - best_energy
-            if np.isnan(best_energy) and np.isnan(prev_best_energy):
-                no_improve_stages += 1
-            elif improvement <= energy_tol:
-                no_improve_stages += 1
-            else:
-                no_improve_stages = 0
-                prev_best_energy = best_energy
-            if no_improve_stages >= patience:
-                break
-            
-            # Raffreddamento: T_new = alpha*T
-            T *= self.sa_alpha
-            stage += 1
-
-        return best_delta
+#    def _run_simulated_annealing_backdoor(
+#        self,
+#        server_round: int,
+#        base_legit_update: np.ndarray,
+#        all_updates_flat: np.ndarray,
+#        malicious_id: int,
+#        local_sds: list[dict],
+#        num_examples: list[float],
+#    ) -> np.ndarray:
+#        """
+#        Simulated Annealing vero e proprio: cerca la perturbazione migliore da aggiungere all'update del client malevolo nel round corrente.
+#        Soluzione iniziale: delta = 0
+#        Mossa: delta' = delta + rho_T * z / ||z||
+#        """
+#
+#        # Calcolo l'MSE del round senza perturbazione
+#        Xbase = all_updates_flat.copy()
+#        Xbase[malicious_id] = base_legit_update
+#        centroid = np.mean(Xbase, axis=0)
+#        distances = np.linalg.norm(Xbase - centroid, axis=1)
+#        threshold = float(np.mean(distances) + np.std(distances))
+#        accepted_mask = [d <= threshold for d in distances]
+#
+#        base_sds = [sd for sd, ok in zip(local_sds, accepted_mask) if ok]
+#        base_w = [w for w, ok in zip(num_examples, accepted_mask) if ok]
+#        base_agg_sd = weighted_average_state_dicts(base_sds, base_w)
+#        true_base_mse = evaluate_model_mse(base_agg_sd, self.val_loader, self.device)
+#
+#        df = pd.read_csv("sequence_to_poison.csv")
+#        x_seq = df.values.astype(np.float32)
+#        if x_seq.shape[0] != 24:
+#            raise ValueError(f"CSV file must contain 24 rows, found {x_seq.shape[0]}")
+#        y_target = 0
+#
+#        # Soluzione iniziale delta = 0, cioè si parte dall'update legittimo.
+#        # Calcoliamo quindi l'energia iniziale, che sarà l'energia corrente, e il valore di mse iniziale, che sarà quello corrente.
+#        # Ci manteniamo soluzione corrente (curr_delta) e migliore soluzione trovata finora (best_delta): questo perche in SA la soluzione corrente non è necessariamente
+#        # la migliore soluzione visitata. Infatti, SA può accettare soluzioni peggiori
+#        d = base_legit_update.shape[0]
+#        delta = np.zeros(d, dtype=np.float64)
+#
+#        # --- 1. CREAZIONE DELLA MASCHERA 'HEAD' ---
+#        head_mask = np.zeros(d, dtype=np.float64)
+#        offset = 0
+#        reference_sd = local_sds[malicious_id]
+#        
+#        for k, v in reference_sd.items():
+#            if torch.is_floating_point(v):
+#                numel = v.numel()
+#                if "head" in k: 
+#                    head_mask[offset : offset + numel] = 1.0
+#                offset += numel
+#        # --------------------------------------------------------
+#
+#        curr_energy, _, curr_prediction = self._energy_backdoor_attack(
+#            candidate_delta=delta,
+#            base_legit_update=base_legit_update,
+#            all_updates_flat=all_updates_flat,
+#            malicious_id=malicious_id,
+#            local_sds=local_sds,
+#            num_examples=num_examples,
+#            base_mse=true_base_mse,
+#            x_seq=x_seq,
+#            y_target=y_target
+#        )
+#        best_delta = delta.copy()
+#        best_energy = curr_energy
+#        best_prediction = curr_prediction
+#
+#        # Ciclo sulle temperature
+#        # Per ogni stadio della temperatura:
+#        #   1) Generiamo una configurazione candidato ammissibile tramite una piccola perturbazione casuale della configurazione corrente.
+#        #      Valutiamo la differenza di energia dE tra la soluzione candidato e la soluzione corrente.
+#        #   2) Se dE <= 0 --> cand_energy <= curr_energy e accettiamo la soluzione candidato come soluzione corrente
+#        #      Se dE > 0 --> cand_energy > curr_energy e accettiamo la soluzione candidato come soluzione corrente con probabilità P(dE)
+#        #   3) Aggioriamo valore di T e se non abbiamo raggiunto l'equilibrio termico T_min torniamo allo step 1. Altrimenti, 
+#        T = self.sa_T0
+#        stage = 0
+#        patience = 20
+#        energy_tol = 1e-7
+#        no_improve_stages = 0
+#        prev_best_energy = best_energy
+#        freeze_stages = 0
+#
+#        while T > self.sa_Tmin:
+#            accepted_moves = 0
+#            rho_T = self.sa_step_radius * (T / self.sa_T0)
+#            #rho_T = max(rho_min, self.sa_step_radius * np.sqrt(T / self.sa_T0))
+#
+#            log(logging.INFO, f"[ROUND {server_round}] SA stage={stage} T={T:.6f}")
+#
+#            for _ in range(self.sa_L):
+#                # Mossa candidata: genera una perturbazione casuale su tutte le dimensioni. Useremo la direzione di z sulla direzione unitaria
+#                z = np.random.randn(d).astype(np.float64)
+#                # L'ampiezza della perturbazione ce la da rho_T
+#
+#                # --- 2. APPLICAZIONE MASCHERA ---
+#                # Azzera tutto il rumore tranne quello in corrispondenza della 'head'
+#                z = z * head_mask
+#                # ----------------------------------------------
+#
+#                z_norm = np.linalg.norm(z) + 1e-12
+#
+#                cand_delta = delta + rho_T * (z / z_norm)
+#
+#                # Energia e mse della soluzione candidata
+#                cand_energy, cand_ok, cand_prediction = self._energy_backdoor_attack(
+#                    candidate_delta=cand_delta,
+#                    base_legit_update=base_legit_update,
+#                    all_updates_flat=all_updates_flat,
+#                    malicious_id=malicious_id,
+#                    local_sds=local_sds,
+#                    num_examples=num_examples,
+#                    base_mse=true_base_mse,
+#                    x_seq=x_seq,
+#                    y_target=y_target
+#                )
+#
+#                if not cand_ok:
+#                    log(logging.INFO, "Solution not accepted")
+#                    continue
+#
+#                # Valutazione e accettazione: 
+#                #   - Se la candidata migliora l'energia --> la accettiamo sempre
+#                #   - Se peggiora --> la accettiamo con probabilità exp(-dE/T)
+#                dE = cand_energy - curr_energy
+#                #print("dE:", cand_energy - curr_energy)
+#                #print("||cand_delta||:", np.linalg.norm(cand_delta))
+#                if dE <= 0:
+#                    delta = cand_delta
+#                    curr_energy = cand_energy
+#                    curr_prediction = cand_prediction
+#                    accepted_moves += 1
+#                    log(logging.INFO, f"Solution accepted")
+#                else:
+#                    p = np.exp(-dE / max(T, 1e-12))
+#                    if np.random.rand() < p:
+#                        delta = cand_delta
+#                        curr_energy = cand_energy
+#                        curr_prediction = cand_prediction
+#                        accepted_moves += 1
+#                        log(logging.INFO, f"Solution accepted with P(dE)={p}")
+#                    else:
+#                        log(logging.INFO, f"Solution not accepted")
+#
+#                if curr_energy < best_energy:
+#                    best_energy = curr_energy
+#                    best_delta = delta.copy()
+#                    best_prediction = curr_prediction
+#
+#            log(logging.INFO,
+#                f"--> Tried {self.sa_L} candidate deltas: "
+#                f"accepted_moves={accepted_moves}/{self.sa_L} "
+#                f"best_energy={best_energy:.6f} best_prediction={best_prediction:.6f}")
+#
+#            # Stop anticipato se praticamente congelato
+#            acceptance_rate = accepted_moves/self.sa_L
+#            if acceptance_rate < 0.01:
+#                freeze_stages += 1
+#            else:
+#                freeze_stages = 0
+#            if freeze_stages >= 3:
+#                break
+#
+#            # Stop anticipato se per patience stadi consecutivi best_energy non è migliorato
+#            improvement = prev_best_energy - best_energy
+#            if np.isnan(best_energy) and np.isnan(prev_best_energy):
+#                no_improve_stages += 1
+#            elif improvement <= energy_tol:
+#                no_improve_stages += 1
+#            else:
+#                no_improve_stages = 0
+#                prev_best_energy = best_energy
+#            if no_improve_stages >= patience:
+#                break
+#            
+#            # Raffreddamento: T_new = alpha*T
+#            T *= self.sa_alpha
+#            stage += 1
+#
+#        return best_delta
 
     def _run_simulated_annealing_targeted(
         self,
