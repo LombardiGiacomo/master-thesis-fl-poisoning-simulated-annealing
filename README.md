@@ -47,4 +47,4 @@ The repository includes various adversarial strategies (executed by 1 attacker o
 A comprehensive, step-by-step guide to setting up and executing the federated learning experiments is provided in the thesis document.
 
 ## 👨‍🎓 Author
-Giacomo Lombardi - [LinkedIn](www.linkedin.com/in/giacomo-lombardi-207060232)
+Giacomo Lombardi - [LinkedIn](https://www.linkedin.com/in/giacomo-lombardi-207060232)
