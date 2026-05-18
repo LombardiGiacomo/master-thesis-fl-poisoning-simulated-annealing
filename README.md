@@ -37,6 +37,7 @@ The repository includes various adversarial strategies (executed by 1 attacker o
 * `LSTMfederated/client_app.py`: Flower ClientApp logic, handling local training and adversarial manipulations (e.g., Noise Injection, Sign-Flipping).
 * `LSTMfederated/server_app.py`: Flower ServerApp logic, implementing `FedAvg` and custom defense strategies (`DistanceBasedDefenseStrategy`, `DistanceBasedDefenseStrategyWithSA`, etc.).
 * `pyproject.toml`: Configuration file defining federation parameters, number of rounds, learning rates, and malicious client assignments.
+* `BaselineCode/`: Contains the clean base code without adversarial behaviors.
 * `aotizhongxin/`, `changping/`, `dingling/`, `dongsi/`, `guanyuan/`: Contain the preprocessed datasets for the 5 monitoring stations.
 * `SequencesBackdoorSA`: Contains the csv files with high-pollution and low-pollution sequences used to run the targeted SA-based attacks.
 * `sa_selective_backdoor_results.txt`, `sa_selective_backdoor_with_defense_results.txt`: Contain the results, in terms of MSE, of the targeted attack execution with and without the server-side centroid distance-based defense.
